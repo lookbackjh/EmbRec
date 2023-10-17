@@ -3,7 +3,7 @@ import torch.nn as nn
 
 class MLP(nn.Module):
 
-    def __init__(self, input_size,args):
+    def __init__(self, args,input_size):
         super(MLP, self).__init__()
         self.deep_layers = nn.ModuleList()
         for i in range(args.num_deep_layers):
@@ -18,11 +18,12 @@ class MLP(nn.Module):
         deep_x = x
         for layer in self.deep_layers:
             deep_x = layer(deep_x)
+        x = self.deep_output_layer(deep_x)
         return x
 
 class FeatureEmbedding(nn.Module):
 
-    def __init__(self,field_dims,args):
+    def __init__(self,args,field_dims):
         super(FeatureEmbedding, self).__init__()
         self.embedding=nn.Embedding(sum(field_dims),args.emb_dim)
 
@@ -34,7 +35,7 @@ class FeatureEmbedding(nn.Module):
 
 class FM_Linear(nn.Module):
 
-    def __init__(self,field_dims,args):
+    def __init__(self,args,field_dims):
         super(FM_Linear, self).__init__()
         self.linear=torch.nn.Embedding(sum(field_dims),1)
         self.bias=nn.Parameter(torch.randn(1))
@@ -47,7 +48,7 @@ class FM_Linear(nn.Module):
 
 class FM_Interaction(nn.Module):
 
-    def __init__(self,input_size,args):
+    def __init__(self,args,input_size):
         super(FM_Interaction, self).__init__()
     
     def forward(self, x):

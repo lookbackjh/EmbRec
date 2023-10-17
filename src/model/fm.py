@@ -6,11 +6,11 @@ from src.model.layers import MLP,FeatureEmbedding,FM_Linear,FM_Interaction
 import pytorch_lightning as pl
 
 class FactorizationMachine(pl.LightningModule):
-    def __init__(self, field_dims, args):
+    def __init__(self, args, field_dims):
         super(FactorizationMachine, self).__init__()
-        self.embedding=FeatureEmbedding(field_dims,args)
-        self.linear=FM_Linear(field_dims,args)
-        self.interaction=FM_Interaction(field_dims,args)
+        self.embedding=FeatureEmbedding(args,field_dims)
+        self.linear=FM_Linear(args,field_dims)
+        self.interaction=FM_Interaction(args,field_dims)
         self.bceloss=nn.BCEWithLogitsLoss() # since bcewith logits is used, we don't need to add sigmoid layer in the end
         self.lr=args.lr
 

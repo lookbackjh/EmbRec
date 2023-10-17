@@ -7,14 +7,15 @@ from src.data.customdataloader import CustomDataLoader
 from torch.utils.data import DataLoader
 from src.model.fm import FactorizationMachine
 from src.customtest import Emb_Test
+from src.model.deepfm import DeepFM
 #copy
 from copy import deepcopy
 parser = argparse.ArgumentParser()
 parser.add_argument('--num_factors', type=int, default=15, help='Number of factors for FM')
-parser.add_argument('--lr', type=float, default=0.005, help='Learning rate for fm training')
+parser.add_argument('--lr', type=float, default=0.001, help='Learning rate for fm training')
 parser.add_argument('--weight_decay', type=float, default=0.1, help='Weight decay(for both FM and autoencoder)')
 parser.add_argument('--num_epochs_ae', type=int, default=100,    help='Number of epochs')
-parser.add_argument('--num_epochs_training', type=int, default=100,    help='Number of epochs')
+parser.add_argument('--num_epochs_training', type=int, default=150,    help='Number of epochs')
 
 parser.add_argument('--batch_size', type=int, default=1024, help='Batch size')
 parser.add_argument('--ae_batch_size', type=int, default=256, help='Batch size for autoencoder')
@@ -83,7 +84,7 @@ def getdata(args):
 
 
 def trainer(args,items,target,c,field_dims):
-    fm=FactorizationMachine(field_dims,args)
+    #fm=FactorizationMachine(field_dims,args)
     Dataset=CustomDataLoader(items,target,c)
 
     #dataloaders
@@ -92,8 +93,8 @@ def trainer(args,items,target,c,field_dims):
 
     import pytorch_lightning as pl
 
-    fm=FactorizationMachine(field_dims,args)
-    trainer=pl.Trainer(max_epochs=1)
+    fm=DeepFM(args,field_dims)
+    trainer=pl.Trainer(max_epochs=args.num_epochs_training)
     trainer.fit(fm,dataloader)
     return fm
 

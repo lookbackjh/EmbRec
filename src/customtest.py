@@ -12,7 +12,7 @@ class Emb_Test:
 
         self.args = args
         self.train_df = train_df
-        self.test_df = test_df
+        self.test_org = test_df
         self.movie_df = movie_df
         self.user_df = user_df
         self.model=model
@@ -104,7 +104,7 @@ class Emb_Test:
 
 
             print("customer id: ",customerid, end=" ")
-            ml=self.le['movie_id'].inverse_transform(test_df['movie_id'].unique())
+            ml=self.le['movie_id'].inverse_transform(temp['movie_id'].unique())
             ml=np.array(ml)
             #print(ml)
             # reorder movie_list
@@ -117,7 +117,7 @@ class Emb_Test:
             
             print("top {} recommended product code: ".format(self.args.topk),real_rec[:5])
 
-            cur_user_test=np.array(self.test_df[self.test_df['user_id']==customerid])
+            cur_user_test=np.array(self.test_org[(self.test_org['user_id'])==customerid])
             cur_user_test=cur_user_test[:,1]
             cur_user_test=np.unique(cur_user_test)
             cur_user_test=cur_user_test.tolist()
