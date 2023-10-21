@@ -27,7 +27,8 @@ class NegativeSampler:
 
     # function taht calculates the c value for each customer and product
     # the higher beta means more weiht on the product frequency, the higher alpha means more weight on the customer frequency
-    def get_c(self,df,uu_sum,ii_sum, alpha=.5, beta=.5, gamma=.5, c_zero=1):
+    def get_c(self,df,uu_sum,ii_sum, alpha=.5, beta=.5, gamma=.5, c_zero=10):
+        c_zero = self.args.c_zeros
         UF = np.array(df["user_frequency"].astype("float"), dtype=float)
         UF /= uu_sum
         IF = np.array(df["movie_frequency"].astype("float"), dtype=float)

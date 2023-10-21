@@ -15,7 +15,7 @@ parser.add_argument('--num_factors', type=int, default=15, help='Number of facto
 parser.add_argument('--lr', type=float, default=0.001, help='Learning rate for fm training')
 parser.add_argument('--weight_decay', type=float, default=0.1, help='Weight decay(for both FM and autoencoder)')
 parser.add_argument('--num_epochs_ae', type=int, default=100,    help='Number of epochs')
-parser.add_argument('--num_epochs_training', type=int, default=150,    help='Number of epochs')
+parser.add_argument('--num_epochs_training', type=int, default=300,    help='Number of epochs')
 
 parser.add_argument('--batch_size', type=int, default=1024, help='Batch size')
 parser.add_argument('--ae_batch_size', type=int, default=256, help='Batch size for autoencoder')
@@ -38,6 +38,7 @@ parser.add_argument('--ratio_negative', type=int, default=0.2, help='ratio_negat
 parser.add_argument('--auto_lr', type=float, default=0.01, help='autoencoder learning rate')
 parser.add_argument('--k', type=int, default=10, help='autoencoder k')
 parser.add_argument('--num_eigenvector', type=int, default=10,help='Number of eigenvectors for SVD')
+parser.add_argument('--c_zeros', type=int, default=5,help='confidence weights for negative samples')
 args = parser.parse_args("")
 
 
@@ -52,7 +53,7 @@ def getdata(args):
     train=train_df.copy(deep=True)
     ns=NegativeSampler(args,train)
 
-    nssampled=ns.negativesample(False)
+    nssampled=ns.negativesample(args.isuniform)
     target=nssampled['target'].to_numpy()
     c=nssampled['c'].to_numpy()
     nssampled.drop(['target','c'],axis=1,inplace= True)
@@ -93,7 +94,7 @@ def trainer(args,items,target,c,field_dims):
 
     import pytorch_lightning as pl
 
-    fm=DeepFM(args,field_dims)
+    fm=FactorizationMachine(args,field_dims)
     trainer=pl.Trainer(max_epochs=args.num_epochs_training)
     trainer.fit(fm,dataloader)
     return fm
@@ -120,4 +121,6 @@ if __name__=='__main__':
 
     for i in range(5):
         print("fold ",i+1," uniform result: ",uniformrsults[i])
-        print("fold ",i+1," negative sampling result: ",nonuniformresults[i])
+        print("fold ",i+1," ns result: ",nonuniformresults[i])
+
+        #print("fold ",i+1," negative sampling result: ",nonuniformresults[i])
