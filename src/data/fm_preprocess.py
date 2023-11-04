@@ -20,21 +20,6 @@ class FM_Preprocessing:
         if target_col not in df.columns:
             raise ValueError(f"The target column {target_col} is not in the DataFrame.")
 
-
-    
-    
-    # def get_c(self, df, alpha=.5, beta=.5, gamma=.5, c_zero=.5):
-    #     UF = np.array(df["customer_frequency"].astype("float"), dtype=float)
-    #     UF /= df.shape[0]
-    #     IF = np.array(df["product_frequency"].astype("float"), dtype=float)
-    #     IF /= df.shape[0]
-    #     Fs = alpha * beta * IF * UF
-    #     Fs_gamma = Fs ** gamma
-    #     c = c_zero / np.sum(Fs_gamma) * Fs_gamma
-    #     c_appended_df = deepcopy(df)
-    #     c_appended_df['C'] = c
-
-    #     return c_appended_df
     
 
     def prepare_data(self):
@@ -59,22 +44,6 @@ class FM_Preprocessing:
         c_values_tensor = torch.where(c_values_tensor < 1, c_values_tensor*1 , c_values_tensor)
 
         # want to make user_id and product_id mapping dictionary
-
-        # load dict.json
-        # import json
-        # with open('dict1.json') as json_file:
-        #     dics = json.load(json_file)
-            
-        # unique_user_df = self.df.drop_duplicates(subset=['AUTH_CUSTOMER_ID']).sort_values('AUTH_CUSTOMER_ID')
-        # user_features_df = unique_user_df[['AUTH_CUSTOMER_ID','BIRTH_YEAR', 'GENDER','customer_frequency']]
-        # user_feature_tensor = torch.tensor(pd.get_dummies(user_features_df).values, dtype=torch.float32)
-
-        # unique_item_df = self.df.drop_duplicates(subset=['PRODUCT_CODE']).sort_values('PRODUCT_CODE')
-        # #item_features_df = unique_item_df.filter(like='DEPTH')
-        # item_feature_df = unique_item_df[[ 'product_frequency']]
-        # item_feature_tensor = torch.tensor(item_feature_df.values, dtype=torch.float32)
-
-        # all_item_ids = list(self.df.PRODUCT_CODE.unique())
 
         # num_features = X.shape[1]
         user_feature_tensor = 1

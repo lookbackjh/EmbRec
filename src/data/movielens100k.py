@@ -1,5 +1,5 @@
 import pandas as pd
-class MovielensData:
+class Movielens100k:
     def __init__(self, data_dir, data_file,fold):
 
         self.data_dir = data_dir
@@ -11,8 +11,18 @@ class MovielensData:
         #train, test loading for each fold
         train=pd.read_csv('dataset/ml-100k/u'+str(self.fold)+'.base',sep='\t',header=None, names=['user_id','movie_id','rating','timestamp'],encoding='latin-1')
         test=pd.read_csv('dataset/ml-100k/u'+str(self.fold)+'.test',sep='\t',header=None, names=['user_id','movie_id','rating','timestamp'],encoding='latin-1')
-       
-        return train,test
+        movie_info=self.movie_getter()
+        user_info=self.user_getter()
+        ui_matrix=self.get_user_item_matrix()
+
+        # change column names movie_id to item_id
+        train=train.rename(columns={'movie_id':'item_id'})
+        test=test.rename(columns={'movie_id':'item_id'})
+        # add column item_id to movie_info
+        movie_info.rename(columns={'movie_id':'item_id'},inplace=True)
+
+
+        return train,test,movie_info,user_info,ui_matrix
     
     def movie_getter(self):
         
@@ -36,9 +46,16 @@ class MovielensData:
         return user_info
     
     def get_user_item_matrix(self):
+
         #get useritem matrix
-        train,test=self.data_getter()
+        train=pd.read_csv('dataset/ml-100k/u'+str(self.fold)+'.base',sep='\t',header=None, names=['user_id','movie_id','rating','timestamp'],encoding='latin-1')
         useritem_matrix=train.pivot_table(index='user_id',columns='movie_id',values='rating')
         useritem_matrix=useritem_matrix.fillna(0)
+        useritem_matrix=useritem_matrix.astype(float)
+        useritem_matrix[useritem_matrix >= 1] = 1
+        useritem_matrix = useritem_matrix.to_numpy()
+        # x dtype to float
+        useritem_matrix=useritem_matrix.astype(float)  
+
         return useritem_matrix
     
