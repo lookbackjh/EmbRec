@@ -61,22 +61,13 @@ class Emb_Test:
 
     def get_metric(self,pred,real):
         # pred is a list of top 5 recommended product code
-        # real is a list of real product code
-        # want to calculate precision
-        # precision = true positive / (true positive + false positive)
         #(len(set(self.recommended_products).intersection(set(actual)))/len(self.recommended_products))
         precision=len(set(pred).intersection(set(real)))/len(pred)
         return precision
     
     def test(self,user_embedding=None,movie_embedding=None):
         
-        #if self.args.embedding_type=='original':
-        
-        
         test_df,user_list,movie_list=self.test_data_generator()
-        
-        #user_df,user_list,movie_list=self.embedding_test_data_generator(user_embedding,movie_embedding) 
-        #fm=FM_Preprocessing(user_df)
         user_list=user_list.astype(int).unique().tolist()
         #movie_list=movie_list.tolist()
         self.model.eval()
@@ -87,13 +78,7 @@ class Emb_Test:
             cur_customer_id='user_id_'+str(customerid)
             temp=test_df[self.le['user_id'].inverse_transform(test_df['user_id'])==customerid]
             X_org=temp.values
-
-
-           
-            #X_emb=X_emb.astype(float)
-            #X_org=X_org.astype(float)
             X_tensor_org= torch.tensor(X_org, dtype=torch.int64)
-            #X_tensor_emb = torch.tensor(X_emb, dtype=torch.float32)
 
 
 
@@ -106,12 +91,9 @@ class Emb_Test:
             print("customer id: ",customerid, end=" ")
             ml=self.le['movie_id'].inverse_transform(temp['movie_id'].unique())
             ml=np.array(ml)
-            #print(ml)
             # reorder movie_list
             ml=ml[topidx]
-            #print(ml)
             cur_userslist=np.array(self.train_df[(self.train_df['user_id'])==customerid]['movie_id'].unique())
-           #cur_userslist=self.le['movie_id'].inverse_transform(cur_userslist)
             # erase the things in ml that are in cur_userslist without changing the order
             real_rec=np.setdiff1d(ml,cur_userslist,assume_unique=True)
             

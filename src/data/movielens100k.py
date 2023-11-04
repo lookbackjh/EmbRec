@@ -35,3 +35,10 @@ class MovielensData:
 
         return user_info
     
+    def get_user_item_matrix(self):
+        #get useritem matrix
+        train,test=self.data_getter()
+        useritem_matrix=train.pivot_table(index='user_id',columns='movie_id',values='rating')
+        useritem_matrix=useritem_matrix.fillna(0)
+        return useritem_matrix
+    

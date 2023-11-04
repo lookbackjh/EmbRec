@@ -1,19 +1,21 @@
 import torch
 from torch.utils.data import Dataset
-from src.data.negativesampler import NegativeSampler
-from src.data.movielensdata import MovielensData
+from util.negativesampler import NegativeSampler
+from data.movielens100k import MovielensData
 import argparse
 from src.data.customdataloader import CustomDataLoader
 from torch.utils.data import DataLoader
 from src.model.fm import FactorizationMachine
 from src.customtest import Emb_Test
 from src.model.deepfm import DeepFM
+from src.model.SVD import SVD
+from src.model.layers import MLP
 import time
 #copy
 from copy import deepcopy
 parser = argparse.ArgumentParser()
 parser.add_argument('--num_factors', type=int, default=15, help='Number of factors for FM')
-parser.add_argument('--lr', type=float, default=0.001, help='Learning rate for fm training')
+parser.add_argument('--lr', type=float, default=0.005, help='Learning rate for fm training')
 parser.add_argument('--weight_decay', type=float, default=0.1, help='Weight decay(for both FM and autoencoder)')
 parser.add_argument('--num_epochs_ae', type=int, default=100,    help='Number of epochs')
 parser.add_argument('--num_epochs_training', type=int, default=300,    help='Number of epochs')
@@ -52,6 +54,9 @@ def getdata(args):
     #merge train and movie_info
     train=train_df.copy(deep=True)
     ns=NegativeSampler(args,train)
+    uimatrix=
+
+    
 
     nssampled=ns.negativesample(args.isuniform)
     target=nssampled['target'].to_numpy()
@@ -85,9 +90,10 @@ def getdata(args):
 
 
 def trainer(args,items,target,c,field_dims):
-    fm=FactorizationMachine(args,field_dims)
+    fm=DeepFM(args,field_dims)
     Dataset=CustomDataLoader(items,target,c)
-
+    svd=SVD(args)
+    user_embedding,item_embedding=svd.get_embedding(matrix)
     #dataloaders
 
     dataloader=DataLoader(Dataset,batch_size=1024,shuffle=True,num_workers=20)
@@ -102,40 +108,15 @@ def trainer(args,items,target,c,field_dims):
 if __name__=='__main__':
     args = parser.parse_args("")
     uniformrsults=[]
-    
-    c_zeros=[5,10,15,20,25]
-    cdict={}
 
-    for j in c_zeros:
-        args.isuniform=False
-        training_times=[]
-        nonuniformresults=[]
-        testing_times=[]
-        args.c_zeros=j
+    for i in range(1,6):
+        args.fold=i
+        items,target,c,field_dims,le,item_info,user_info,train_df,test_df=getdata(args)
+        model=trainer(args,items,target,c,field_dims)
+        tester=Emb_Test(args,model,train_df,test_df,le,item_info,user_info)
+        result=tester.test()
 
-        for i in range(1,6):
-            args.fold=i
-
-            items,target,c,field_dims,le,item_info,user_info,train_df,test_df=getdata(args)
-            start_time=time.time()
-            model=trainer(args,items,target,c,field_dims)
-            end_time=time.time()
-            training_times.append(end_time-start_time)
-            tester=Emb_Test(args,model,train_df,test_df,le,item_info,user_info)
-            start_time=time.time()
-            result=tester.test()
-            end_time=time.time()
-            testing_times.append(end_time-start_time)
-            nonuniformresults.append(result)
-        
-        cdict[j]=[nonuniformresults,training_times,testing_times]
 
 
     
-    #print(a)
-    #fm=trainer(args,items,target,c,field_dims)
-    for k in cdict.keys():
-        for i in range(5):
-            print("fold ",i+1," nonuniform result: ",cdict[k][0][i])
-            print("fold ",i+1," training time: ",cdict[k][1][i])
-            print("fold ",i+1," testing time: ",cdict[k][2][i])
+

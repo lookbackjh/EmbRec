@@ -133,66 +133,35 @@ class Tester:
         return user_df,user_list,movie_ids
 
     def get_metric(self,pred,real):
-        # pred is a list of top 5 recommended product code
-        # real is a list of real product code
-
-        # want to calculate precision, recall, f1 score
-        # precision = true positive / (true positive + false positive)
-        # recall = true positive / (true positive + false negative)
         # f1 score = 2 * (precision * recall) / (precision + recall)
         #(len(set(self.recommended_products).intersection(set(actual)))/len(self.recommended_products))
         precision=len(set(pred).intersection(set(real)))/len(pred)
         return precision
     
     def test(self,user_embedding=None,movie_embedding=None):
-        
-        #if self.args.embedding_type=='original':
-        
-        
+
         original_df,user_list,movie_list=self.test_data_generator()
-        
-        #user_df,user_list,movie_list=self.embedding_test_data_generator(user_embedding,movie_embedding) 
-        #fm=FM_Preprocessing(user_df)
         user_list=user_list.astype(int).unique().tolist()
-        #movie_list=movie_list.tolist()
         self.model.eval()
         precisions=[]
         for customerid in tqdm.tqdm(user_list[:]):
-
             #if self.args.embedding_type=='original':
             cur_customer_id='user_id_'+str(customerid)
             temp=original_df[original_df[cur_customer_id]==1]
             X_org=temp.drop(['c','target'],axis=1).values
-
-
-            #temp=user_df[user_df['user_id']==customerid]
-            #X_emb=temp.drop(['user_id','c','target'],axis=1).values
-            #print(temp)
-            #c_values=temp['c'].values
             y=temp['target'].values
-
-           
-            #X_emb=X_emb.astype(float)
             X_org=X_org.astype(float)
-
             y=y.astype(float)
             X_tensor_org= torch.tensor(X_org, dtype=torch.int64)
-            #X_tensor_emb = torch.tensor(X_emb, dtype=torch.float32)
             y_tensor = torch.tensor(y, dtype=torch.float32).view(-1)
-            #c_values_tensor = torch.tensor(c_values, dtype=torch.float32)
-
-
-
             result=self.model.forward(X_tensor_org,X_tensor_org)
+            # get top k indices
             topidx=torch.argsort(result,descending=True)[:]
-            #swith tensor to list
             topidx=topidx.tolist()
-
-
+            # recommendation for customerid
             print("customer id: ",customerid, end=" ")
             ml=copy.deepcopy(movie_list)    
             ml=np.array(ml)
-            #print(ml)
             # reorder movie_list
             ml=ml[topidx]
             #print(ml)
