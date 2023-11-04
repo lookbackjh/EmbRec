@@ -41,8 +41,9 @@ class FM_Linear(nn.Module):
         self.bias=nn.Parameter(torch.randn(1))
     
     def forward(self, x):
-        # input x: batch_size * num_features 
-        x = torch.sum(self.linear(x))+self.bias
+        # input x: batch_size * num_features
+        linear_term=self.linear(x)
+        x = torch.sum(linear_term,dim=1)+self.bias
 
         return x
 

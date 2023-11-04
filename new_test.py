@@ -1,17 +1,18 @@
 import torch
 from torch.utils.data import Dataset
-from util.negativesampler import NegativeSampler
-from data.movielens100k import MovielensData
+from src.util.negativesampler import NegativeSampler
+from src.data.movielens100k import Movielens100k
 import argparse
 from src.data.customdataloader import CustomDataLoader
 from torch.utils.data import DataLoader
+from src.data.realdata import RealData
 from src.model.fm import FactorizationMachine
 from src.customtest import Emb_Test
 from src.model.deepfm import DeepFM
 from src.model.SVD import SVD
 from src.model.layers import MLP
-from src.data.realdata import RealData
 import time
+import numpy as np
 #copy
 from copy import deepcopy
 parser = argparse.ArgumentParser()
@@ -42,24 +43,27 @@ parser.add_argument('--ratio_negative', type=int, default=0.2, help='ratio_negat
 parser.add_argument('--auto_lr', type=float, default=0.01, help='autoencoder learning rate')
 parser.add_argument('--k', type=int, default=10, help='autoencoder k')
 parser.add_argument('--num_eigenvector', type=int, default=10,help='Number of eigenvectors for SVD')
+parser.add_argument('--datatype', type=str, default="ml100k",help='ml100k or ml1m or goodbook or googlebook')
 args = parser.parse_args("")
 
 
 
 
 def getdata(args):
-    dataset=RealData('dataset/ml-100k','u.data',fold=args.fold)
-    ns=NegativeSampler(args,train)
+    
+    # get any dataset
+    dataset=RealData(args)
+    train_df, test, item_info, user_info, ui_matrix =dataset.get_data()
+    train=train_df.copy(deep=True)
 
+    # do negative sampling and merge with item_info and user_info, negative sampling based on c
+    ns=NegativeSampler(args,train,item_info,user_info)
     nssampled=ns.negativesample(args.isuniform)
     target=nssampled['target'].to_numpy()
     c=nssampled['c'].to_numpy()
     nssampled.drop(['target','c'],axis=1,inplace= True)
-    nssampled=nssampled.merge(movie_info,on='item_id',how='left')
+    nssampled=nssampled.merge(item_info,on='item_id',how='left')
     nssampled=nssampled.merge(user_info,on='user_id',how='left')
-
-    #train.drop(['timestamp','rating'],axis=1,inplace=True)
-    train=nssampled
 
     #labelencoder
     from sklearn.preprocessing import LabelEncoder
@@ -73,10 +77,10 @@ def getdata(args):
 
 
     items=train.to_numpy()[:].astype('int')
-    import numpy as np
-
     field_dims=np.max(items,axis=0)+1
-    return items,target,c,field_dims,les,movie_info,user_info,train_df,test
+
+
+    return items,target,c,field_dims,les,item_info,user_info,train_df,test
 
 
 
@@ -85,8 +89,6 @@ def getdata(args):
 def trainer(args,items,target,c,field_dims):
     fm=DeepFM(args,field_dims)
     Dataset=CustomDataLoader(items,target,c)
-    svd=SVD(args)
-    user_embedding,item_embedding=svd.get_embedding(matrix)
     #dataloaders
 
     dataloader=DataLoader(Dataset,batch_size=1024,shuffle=True,num_workers=20)

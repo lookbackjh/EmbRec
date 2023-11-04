@@ -1,7 +1,7 @@
 import torch
 from torch.utils.data import Dataset
-from src.data.negativesampler import NegativeSampler
-from src.data.movielensdata import MovielensData
+from util.negativesampler import NegativeSampler
+from data.movielens100k import MovielensData
 import argparse
 from src.data.customdataloader import CustomDataLoader
 from torch.utils.data import DataLoader
