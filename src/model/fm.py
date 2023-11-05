@@ -22,19 +22,21 @@ class FactorizationMachine(pl.LightningModule):
         #l2_reg = torch.norm(self.w)**2 + torch.norm(self.v)**2
         return torch.mean(weighted_bce) 
     
-    def forward(self, x):
+    def forward(self, x,x_cont):
         # FM part loss with interaction terms
         # x: batch_size * num_features
-        lin_term = self.linear(x)
-        inter_term = self.interaction(self.embedding(x))
+        lin_term = self.linear(x,x_cont)
+        embedding=self.embedding(x)
+
+        inter_term = self.interaction(embedding,x_cont)
         x= lin_term + inter_term
         x=x.squeeze(1)
         return x
 
     
     def training_step(self, batch, batch_idx):
-        x,y,c_values=batch
-        y_pred=self.forward(x)
+        x,x_cont,y,c_values=batch
+        y_pred=self.forward(x,x_cont)
         loss_y=self.loss(y_pred, y,c_values)
         self.log('train_loss', loss_y, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         return loss_y

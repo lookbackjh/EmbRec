@@ -8,8 +8,10 @@ from torch.utils.data import DataLoader
 from src.data.realdata import RealData
 from src.model.fm import FactorizationMachine
 from src.customtest import Emb_Test
+from sklearn.preprocessing import LabelEncoder
 from src.model.deepfm import DeepFM
 from src.model.SVD import SVD
+from src.data.custompreprocess import CustomOneHot
 from src.model.layers import MLP
 import time
 import numpy as np
@@ -34,7 +36,7 @@ parser.add_argument('--save_model', type=bool, default=False)
 
 parser.add_argument('--emb_dim', type=int, default=16, help='embedding dimension for DeepFM')
 parser.add_argument('--num_embedding', type=int, default=200, help='Number of embedding for autoencoder') 
-parser.add_argument('--embedding_type', type=str, default='original', help='AE or SVD or original')
+parser.add_argument('--embedding_type', type=str, default='SVD', help='AE or SVD or original')
 parser.add_argument('--model_type', type=str, default='deepfm', help='fm or deepfm')
 parser.add_argument('--topk', type=int, default=5, help='top k items to recommend')
 parser.add_argument('--fold', type=int, default=1, help='fold number')
@@ -42,7 +44,7 @@ parser.add_argument('--isuniform', type=bool, default=True, help='isuniform')
 parser.add_argument('--ratio_negative', type=int, default=0.2, help='ratio_negative')
 parser.add_argument('--auto_lr', type=float, default=0.01, help='autoencoder learning rate')
 parser.add_argument('--k', type=int, default=10, help='autoencoder k')
-parser.add_argument('--num_eigenvector', type=int, default=10,help='Number of eigenvectors for SVD')
+parser.add_argument('--num_eigenvector', type=int, default=8,help='Number of eigenvectors for SVD')
 parser.add_argument('--datatype', type=str, default="ml100k",help='ml100k or ml1m or goodbook or googlebook')
 args = parser.parse_args("")
 
@@ -65,30 +67,43 @@ def getdata(args):
     nssampled=nssampled.merge(item_info,on='item_id',how='left')
     nssampled=nssampled.merge(user_info,on='user_id',how='left')
 
+    user_embedding,item_embedding= SVD(args).get_embedding(ui_matrix)
+
+    cat_columns=nssampled.columns
+
+
+    merger=CustomOneHot(args,nssampled,item_info,user_info)
+    new_train_df=merger.embedding_merge(user_embedding=user_embedding,item_embedding=item_embedding)
+
+    cont_train_df=new_train_df.drop(cat_columns,axis=1)
     #labelencoder
-    from sklearn.preprocessing import LabelEncoder
+
     les={}
-    train=train.astype(object)
-    columns=train.columns
-    for col in columns:
+
+    
+    for col in cat_columns:
         le=LabelEncoder()
-        train[col]=le.fit_transform(train[col])
+        new_train_df[col]=le.fit_transform(new_train_df[col])
         les[col]=le
 
 
-    items=train.to_numpy()[:].astype('int')
+    if args.embedding_type=='SVD':
+        items=new_train_df[cat_columns].drop(['user_id','item_id'],axis=1).to_numpy()[:].astype('int')
+    else: 
+        items=new_train_df[cat_columns].to_numpy()[:].astype('int')
+    
+    cats=cont_train_df.to_numpy()[:].astype('float32')
+    
     field_dims=np.max(items,axis=0)+1
 
 
-    return items,target,c,field_dims,les,item_info,user_info,train_df,test
+
+    return items,cats,target,c,field_dims,les,item_info,user_info,train_df,test,user_embedding,item_embedding
 
 
-
-
-
-def trainer(args,items,target,c,field_dims):
+def trainer(args,items,cats,target,c,field_dims):
     fm=DeepFM(args,field_dims)
-    Dataset=CustomDataLoader(items,target,c)
+    Dataset=CustomDataLoader(items,cats,target,c)
     #dataloaders
 
     dataloader=DataLoader(Dataset,batch_size=1024,shuffle=True,num_workers=20)
@@ -102,14 +117,30 @@ def trainer(args,items,target,c,field_dims):
 
 if __name__=='__main__':
     args = parser.parse_args("")
-    uniformrsults=[]
+    svdresults=[]
+    originalresults=[]
+    embedding_type=['SVD','original']
 
-    for i in range(1,6):
-        args.fold=i
-        items,target,c,field_dims,le,item_info,user_info,train_df,test_df=getdata(args)
-        model=trainer(args,items,target,c,field_dims)
-        tester=Emb_Test(args,model,train_df,test_df,le,item_info,user_info)
-        result=tester.test()
+    for embedding in embedding_type:
+        args.embedding_type=embedding
+        for i in range(1,6):
+            args.fold=i
+            items,cats,target,c,field_dims,le,item_info,user_info,train_df,test_df,user_embedding,item_embedding=getdata(args)
+            model=trainer(args,items,cats,target,c,field_dims)
+            tester=Emb_Test(args,model,train_df,test_df,le,item_info,user_info,user_embedding,item_embedding)
+            result=tester.test()
+            if embedding=='SVD':
+                svdresults.append(result)
+            else:
+                originalresults.append(result)
+    
+
+    for embedding in embedding_type:
+        if embedding=='SVD':
+            print("SVD results: ",svdresults)
+        else:
+            print("original results: ",originalresults)
+
 
 
 

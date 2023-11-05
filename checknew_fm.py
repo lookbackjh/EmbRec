@@ -1,6 +1,6 @@
 import torch
 from torch.utils.data import Dataset
-from util.negativesampler import NegativeSampler
+from src.util.negativesampler import NegativeSampler
 from data.movielens100k import MovielensData
 import argparse
 from src.data.customdataloader import CustomDataLoader
@@ -8,6 +8,8 @@ from torch.utils.data import DataLoader
 from src.model.fm import FactorizationMachine
 from src.customtest import Emb_Test
 from src.model.deepfm import DeepFM
+from src.data.custompreprocess import CustomOneHot
+from src.model.SVD import SVD
 #copy
 from copy import deepcopy
 parser = argparse.ArgumentParser()
@@ -61,9 +63,14 @@ def getdata(args):
     nssampled=nssampled.merge(user_info,on='user_id',how='left')
 
     #train.drop(['timestamp','rating'],axis=1,inplace=True)
-    train=nssampled
+    user_embedding,item_embedding= SVD(args).get_embedding(u)
+    merger=CustomOneHot(args,nssampled,item_embedding,user_embedding)
 
     #labelencoder
+    
+    
+    
+    
     from sklearn.preprocessing import LabelEncoder
     les={}
     train=train.astype(object)
@@ -76,6 +83,7 @@ def getdata(args):
 
     items=train.to_numpy()[:].astype('int')
     import numpy as np
+
 
     field_dims=np.max(items,axis=0)+1
     return items,target,c,field_dims,les,movie_info,user_info,train_df,test
@@ -101,26 +109,10 @@ def trainer(args,items,target,c,field_dims):
 
 if __name__=='__main__':
     args = parser.parse_args("")
-    uniformrsults=[]
-    nonuniformresults=[]
-    for j in [True,False]:
-        args.isuniform=j
-        for i in range(1,6):
-            args.fold=i
 
-            items,target,c,field_dims,le,item_info,user_info,train_df,test_df=getdata(args)
-            model=trainer(args,items,target,c,field_dims)
-            tester=Emb_Test(args,model,train_df,test_df,le,item_info,user_info)
-            result=tester.test()
-            if j:
-                uniformrsults.append(result)
-            else:
-                nonuniformresults.append(result)
-    #print(a)
-    #fm=trainer(args,items,target,c,field_dims)
-
-    for i in range(5):
-        print("fold ",i+1," uniform result: ",uniformrsults[i])
-        print("fold ",i+1," ns result: ",nonuniformresults[i])
+    items,target,c,field_dims,le,item_info,user_info,train_df,test_df=getdata(args)
+    model=trainer(args,items,target,c,field_dims)
+    tester=Emb_Test(args,model,train_df,test_df,le,item_info,user_info)
+    result=tester.test()
 
         #print("fold ",i+1," negative sampling result: ",nonuniformresults[i])
