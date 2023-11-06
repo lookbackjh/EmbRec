@@ -109,6 +109,8 @@ class Emb_Test:
                 X_cat=temp[catcols].drop(['user_id','item_id'],axis=1).values
             else:
                 X_cat=temp[catcols].values
+
+        
             X_cat=torch.tensor(X_cat, dtype=torch.int64)
             X_cont=temp.drop(catcols,axis=1).values
             X_cont=torch.tensor(X_cont, dtype=torch.float32)

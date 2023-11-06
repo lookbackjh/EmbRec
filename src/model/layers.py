@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import numpy as np
 
 class MLP(nn.Module):
 
@@ -26,10 +27,16 @@ class FeatureEmbedding(nn.Module):
     def __init__(self,args,field_dims):
         super(FeatureEmbedding, self).__init__()
         self.embedding=nn.Embedding(sum(field_dims),args.emb_dim)
+        self.field_dims=field_dims
+        self.offsets = np.array((0, *np.cumsum(field_dims)[:-1]), dtype=np.int64)
 
     def forward(self, x):
         # input x: batch_size * num_features
-        x = self.embedding(x)
+        x = x + x.new_tensor(self.offsets).unsqueeze(0)  # this is for adding offset for each feature for example, movie id starts from 0, user id starts from 1000
+
+        x=self.embedding(x)
+
+
         return x
 
 
@@ -40,10 +47,12 @@ class FM_Linear(nn.Module):
         self.linear=torch.nn.Embedding(sum(field_dims),1)
         self.bias=nn.Parameter(torch.randn(1))
         self.w=nn.Parameter(torch.randn(args.num_eigenvector*2))
+        self.offsets = np.array((0, *np.cumsum(field_dims)[:-1]), dtype=np.int64)
         self.args=args
     
     def forward(self, x,x_cont):
         # input x: batch_size * num_features
+        x=x+x.new_tensor(self.offsets).unsqueeze(0)
         linear_term=self.linear(x)
         # add continuous features
         cont_linear = torch.matmul(x_cont, self.w).reshape(-1,1)
@@ -73,16 +82,16 @@ class FM_Interaction(nn.Module):
 
 
         if self.args.embedding_type=='SVD':
-            linear=torch.sum(x_comb,1)
+            linear=torch.sum(x_comb,1)**2
             square_sum=torch.sum(x_comb**2,1)
-            
+
         else:
-            linear=torch.sum(x,1)
+            linear=torch.sum(x,1)**2
             square_sum=torch.sum(x**2,1)
 
         #square_sum_emb=torch.concat((square_sum,x_cont**2),1)
 
-        interaction=0.5*(linear**2-square_sum)
+        interaction=0.5*(linear-square_sum)
         interaction=torch.sum(interaction,1,keepdim=True)
 
     

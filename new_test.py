@@ -22,7 +22,7 @@ parser.add_argument('--num_factors', type=int, default=15, help='Number of facto
 parser.add_argument('--lr', type=float, default=0.005, help='Learning rate for fm training')
 parser.add_argument('--weight_decay', type=float, default=0.1, help='Weight decay(for both FM and autoencoder)')
 parser.add_argument('--num_epochs_ae', type=int, default=100,    help='Number of epochs')
-parser.add_argument('--num_epochs_training', type=int, default=300,    help='Number of epochs')
+parser.add_argument('--num_epochs_training', type=int, default=50,    help='Number of epochs')
 
 parser.add_argument('--batch_size', type=int, default=1024, help='Batch size')
 parser.add_argument('--ae_batch_size', type=int, default=256, help='Batch size for autoencoder')
@@ -92,18 +92,18 @@ def getdata(args):
     else: 
         items=new_train_df[cat_columns].to_numpy()[:].astype('int')
     
-    cats=cont_train_df.to_numpy()[:].astype('float32')
+    cons=cont_train_df.to_numpy()[:].astype('float32')
     
     field_dims=np.max(items,axis=0)+1
 
 
 
-    return items,cats,target,c,field_dims,les,item_info,user_info,train_df,test,user_embedding,item_embedding
+    return items,cons,target,c,field_dims,les,item_info,user_info,train_df,test,user_embedding,item_embedding
 
 
-def trainer(args,items,cats,target,c,field_dims):
+def trainer(args,items,cons,target,c,field_dims):
     fm=DeepFM(args,field_dims)
-    Dataset=CustomDataLoader(items,cats,target,c)
+    Dataset=CustomDataLoader(items,cons,target,c)
     #dataloaders
 
     dataloader=DataLoader(Dataset,batch_size=1024,shuffle=True,num_workers=20)
@@ -125,8 +125,8 @@ if __name__=='__main__':
         args.embedding_type=embedding
         for i in range(1,6):
             args.fold=i
-            items,cats,target,c,field_dims,le,item_info,user_info,train_df,test_df,user_embedding,item_embedding=getdata(args)
-            model=trainer(args,items,cats,target,c,field_dims)
+            items,cons,target,c,field_dims,le,item_info,user_info,train_df,test_df,user_embedding,item_embedding=getdata(args)
+            model=trainer(args,items,cons,target,c,field_dims)
             tester=Emb_Test(args,model,train_df,test_df,le,item_info,user_info,user_embedding,item_embedding)
             result=tester.test()
             if embedding=='SVD':
@@ -135,14 +135,8 @@ if __name__=='__main__':
                 originalresults.append(result)
     
 
-    for embedding in embedding_type:
-        if embedding=='SVD':
-            print("SVD results: ",svdresults)
-        else:
-            print("original results: ",originalresults)
-
-
-
-
     
 
+    for i in range(5):
+        print("fold ",i+1," SVD result: ",svdresults[i])
+        print("fold ",i+1," original result: ",originalresults[i])

@@ -24,6 +24,7 @@ class DeepFM(pl.LightningModule):
         self.bceloss=nn.BCEWithLogitsLoss() # since bcewith logits is used, we don't need to add sigmoid layer in the end
         self.lr=args.lr
         self.args=args
+        #self.sig=nn.Sigmoid()
 
     def mse(self, y_pred, y_true):
         return self.bceloss(y_pred, y_true.float())
@@ -35,7 +36,7 @@ class DeepFM(pl.LightningModule):
 
     def l2norm(self):
         
-        for param in self.model.parameters():
+        for param in self.parameters():
             param.data = param.data / torch.norm(param.data, 2)
         
 
@@ -46,7 +47,7 @@ class DeepFM(pl.LightningModule):
         weighted_bce = c_values * mse
         #l2_reg = torch.norm(self.w) + torch.norm(self.v) # L2 regularization
 
-        loss_y=torch.mean(weighted_bce) 
+        loss_y=weighted_bce.mean() #+ self.args.weight_decay * l2_reg
         
         return loss_y
     
@@ -70,6 +71,8 @@ class DeepFM(pl.LightningModule):
         #deep_out=self.sig(deep_out)
         y_pred=fm_part+deep_part.squeeze()
        
+        #sig_y_pred=self.sig(y_pred)
+
         return y_pred
 
     def training_step(self, batch, batch_idx):

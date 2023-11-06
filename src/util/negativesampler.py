@@ -66,17 +66,28 @@ class NegativeSampler:
             ns_test=ns_test.drop_duplicates(subset=['item_id'],keep='first',inplace=False)
             ns_df=pd.DataFrame()
 
+            
+            
             ns_df['item_id'] = negative_sample_products
             ns_df=ns_df.assign(user_id=customer)
             #ns_df['AUTH_CUSTOMER_ID'] = customer
             #ns_df=ns_df.assign(BIRTH_YEAR = customer_birth_category)
             #ns_df=ns_df.assign(GENDER= customer_gender_category)
             ns_df=ns_df.assign(user_frequency = customer_frequency)
-            ns_df=ns_df.join(ns_test.set_index('item_id'), on='item_id')
+            # mergge
+            ns_df=pd.merge(ns_df,ns_test,on='item_id',how='left')
+
+
+            #ns_df=ns_df.join(ns_test, on='item_id')
             # not_purchased_df=pd.concat([not_purchased_df,ns_df],axis=0, ignore_index=True)
             ns_df_list += [ns_df]
         not_purchased_df=pd.concat(objs=ns_df_list, axis=0, ignore_index=True)
         
+        #change column order
+        not_purchased_df=not_purchased_df[['user_id','item_id','user_frequency','item_frequency']]
+        # column of the not_purchased_df is 'user_id','item_id','user_frequency','item_frequency'
+
+
         not_purchased_df['target'] = 0
 
         mm=self.item_info['item_id'].map(self.original_df['item_id'].value_counts())
@@ -98,8 +109,9 @@ class NegativeSampler:
         else:
             not_purchased_df=self.get_c(not_purchased_df,uu_sum=uu_sum,ii_sum=mm_sum)
 
+        # not_purchased_df.set_index('user_id',inplace=True)
 
-        print(not_purchased_df)
+        # print(not_purchased_df)
 
         to_return = pd.concat([self.original_df, not_purchased_df], axis=0, ignore_index=True)
         #print(to_return)
