@@ -1,11 +1,14 @@
 from src.data.movielens100k import Movielens100k
-class RealData:
+from src.data.movielens1m import Movielens1m
+class DataWrapper:
 
     def __init__(self,args) -> None:
         pass
 
         if args.datatype=="ml100k":
             self.data=Movielens100k('dataset/ml-100k','u.data', args.fold)
+        elif args.datatype=="ml1m":
+            self.data=Movielens1m(args)
         else:
             raise NotImplementedError
 

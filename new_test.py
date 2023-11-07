@@ -1,28 +1,30 @@
 import torch
 from torch.utils.data import Dataset
 from src.util.negativesampler import NegativeSampler
-from src.data.movielens100k import Movielens100k
 import argparse
 from src.data.customdataloader import CustomDataLoader
 from torch.utils.data import DataLoader
-from src.data.realdata import RealData
+from src.data.datawrapper import DataWrapper
 from src.model.fm import FactorizationMachine
 from src.customtest import Emb_Test
 from sklearn.preprocessing import LabelEncoder
 from src.model.deepfm import DeepFM
 from src.model.SVD import SVD
 from src.data.custompreprocess import CustomOneHot
-from src.model.layers import MLP
 import time
 import numpy as np
 #copy
 from copy import deepcopy
 parser = argparse.ArgumentParser()
+
+parser.add_argument('--train_ratio', type=float, default=0.8, help='training ratio for movielens1m')
+
+
 parser.add_argument('--num_factors', type=int, default=15, help='Number of factors for FM')
 parser.add_argument('--lr', type=float, default=0.005, help='Learning rate for fm training')
 parser.add_argument('--weight_decay', type=float, default=0.1, help='Weight decay(for both FM and autoencoder)')
 parser.add_argument('--num_epochs_ae', type=int, default=100,    help='Number of epochs')
-parser.add_argument('--num_epochs_training', type=int, default=50,    help='Number of epochs')
+parser.add_argument('--num_epochs_training', type=int, default=250,    help='Number of epochs')
 
 parser.add_argument('--batch_size', type=int, default=1024, help='Batch size')
 parser.add_argument('--ae_batch_size', type=int, default=256, help='Batch size for autoencoder')
@@ -45,7 +47,7 @@ parser.add_argument('--ratio_negative', type=int, default=0.2, help='ratio_negat
 parser.add_argument('--auto_lr', type=float, default=0.01, help='autoencoder learning rate')
 parser.add_argument('--k', type=int, default=10, help='autoencoder k')
 parser.add_argument('--num_eigenvector', type=int, default=8,help='Number of eigenvectors for SVD')
-parser.add_argument('--datatype', type=str, default="ml100k",help='ml100k or ml1m or goodbook or googlebook')
+parser.add_argument('--datatype', type=str, default="ml1m",help='ml100k or ml1m or goodbook or googlebook')
 args = parser.parse_args("")
 
 
@@ -54,7 +56,7 @@ args = parser.parse_args("")
 def getdata(args):
     
     # get any dataset
-    dataset=RealData(args)
+    dataset=DataWrapper(args)
     train_df, test, item_info, user_info, ui_matrix =dataset.get_data()
     train=train_df.copy(deep=True)
 
@@ -119,24 +121,24 @@ if __name__=='__main__':
     args = parser.parse_args("")
     svdresults=[]
     originalresults=[]
-    embedding_type=['SVD','original']
+    embedding_type=['original']
 
     for embedding in embedding_type:
         args.embedding_type=embedding
-        for i in range(1,6):
-            args.fold=i
-            items,cons,target,c,field_dims,le,item_info,user_info,train_df,test_df,user_embedding,item_embedding=getdata(args)
-            model=trainer(args,items,cons,target,c,field_dims)
-            tester=Emb_Test(args,model,train_df,test_df,le,item_info,user_info,user_embedding,item_embedding)
-            result=tester.test()
-            if embedding=='SVD':
-                svdresults.append(result)
-            else:
-                originalresults.append(result)
+        items,cons,target,c,field_dims,le,item_info,user_info,train_df,test_df,user_embedding,item_embedding=getdata(args)
+        model=trainer(args,items,cons,target,c,field_dims)
+        tester=Emb_Test(args,model,train_df,test_df,le,item_info,user_info,user_embedding,item_embedding)
+        result=tester.test()
+        if embedding=='SVD':
+            svdresults.append(result)
+        else:
+            originalresults.append(result)
     
 
     
 
-    for i in range(5):
-        print("fold ",i+1," SVD result: ",svdresults[i])
-        print("fold ",i+1," original result: ",originalresults[i])
+    for i in range(1):
+        print(" SVD result: ",svdresults[i])
+    
+    for i in range(1):
+        print(" original result: ",originalresults[i])
