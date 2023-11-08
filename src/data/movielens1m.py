@@ -31,7 +31,7 @@ class Movielens1m:
         for i in user_ids:
             temp=train[train['user_id']==i]
             train_list.append(temp.iloc[:int(len(temp)*self.args.train_ratio)])
-            test_list.append(temp.iloc[int(len(temp)*(1-self.args.train_ratio)):])
+            test_list.append(temp.iloc[int(len(temp)*(self.args.train_ratio)):])
         train=pd.concat(train_list)
         test=pd.concat(test_list)
 
@@ -64,18 +64,19 @@ class Movielens1m:
         #simple preproccess of user_data
         user_info=pd.read_csv('dataset/ml-1m/users.dat',sep="::",header=None,names=['user_id','gender','age','occupation','zipcode'],encoding='latin-1')
         user_info.drop(['zipcode'],axis=1,inplace=True)
-        user_info['user_id']=user_info.index
+        #user_info['user_id']=user_info.index
         #user_info=pd.get_dummies(columns=['occupation'],data=user_info)
         user_info['gender'] = [1 if i == 'M' else 0 for i in user_info['gender']]
         # want to discretize age category  
         user_info['age'] = pd.cut(user_info['age'], bins=[0, 10, 20, 30, 40, 50, 60, 70, 80, 90], labels=[0, 1, 2, 3, 4, 5, 6, 7, 8])
+        #user_info['user_id']=user_info['user_id']+1
 
         return user_info
     
     def get_user_item_matrix(self):
 
         #get useritem matrix
-        train=pd.read_csv('dataset/ml-1m/ratings.dat',sep='::',header=None, names=['user_id','movie_id','rating','timestamp'],encoding='latin-1')
+        train,_=self.train_test_getter()
         useritem_matrix=train.pivot_table(index='user_id',columns='movie_id',values='rating')
         useritem_matrix=useritem_matrix.fillna(0)
         useritem_matrix=useritem_matrix.astype(float)

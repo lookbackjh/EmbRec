@@ -23,8 +23,8 @@ parser.add_argument('--train_ratio', type=float, default=0.8, help='training rat
 parser.add_argument('--num_factors', type=int, default=15, help='Number of factors for FM')
 parser.add_argument('--lr', type=float, default=0.005, help='Learning rate for fm training')
 parser.add_argument('--weight_decay', type=float, default=0.1, help='Weight decay(for both FM and autoencoder)')
-parser.add_argument('--num_epochs_ae', type=int, default=100,    help='Number of epochs')
-parser.add_argument('--num_epochs_training', type=int, default=250,    help='Number of epochs')
+parser.add_argument('--num_epochs_ae', type=int, default=300,    help='Number of epochs')
+parser.add_argument('--num_epochs_training', type=int, default=300,    help='Number of epochs')
 
 parser.add_argument('--batch_size', type=int, default=1024, help='Batch size')
 parser.add_argument('--ae_batch_size', type=int, default=256, help='Batch size for autoencoder')
@@ -121,18 +121,33 @@ if __name__=='__main__':
     args = parser.parse_args("")
     svdresults=[]
     originalresults=[]
-    embedding_type=['original']
+    embedding_type=['original','SVD']
+    svd_test_time=[]
+    original_test_time=[]
+    svd_train_time=[]
+    original_train_time=[]
 
     for embedding in embedding_type:
         args.embedding_type=embedding
         items,cons,target,c,field_dims,le,item_info,user_info,train_df,test_df,user_embedding,item_embedding=getdata(args)
+
+        start_training_time=time.time()
         model=trainer(args,items,cons,target,c,field_dims)
+        end_training_time=time.time()
+        
+        start_test_time=time.time()
         tester=Emb_Test(args,model,train_df,test_df,le,item_info,user_info,user_embedding,item_embedding)
+        end_test_time=time.time()
+
         result=tester.test()
         if embedding=='SVD':
             svdresults.append(result)
+            svd_test_time.append(end_test_time-start_test_time)
+            svd_train_time.append(end_training_time-start_training_time)
         else:
             originalresults.append(result)
+            original_test_time.append(end_test_time-start_test_time)
+            original_train_time.append(end_training_time-start_training_time)
     
 
     

@@ -74,6 +74,8 @@ class Emb_Test:
             item_embedding_df['item_embedding_'+str(i)]=self.item_embedding[:,i]
         
         
+        #없는건 0으로 처리해줘야함. 
+
         movie_emb_included_df=pd.merge(userinfoadded.set_index('item_id'), item_embedding_df,on='item_id',how='left')
         user_emb_included_df=pd.merge(movie_emb_included_df.set_index('user_id'),user_embedding_df, on='user_id',how='left')
         
@@ -93,6 +95,12 @@ class Emb_Test:
     
     def test(self,user_embedding=None,movie_embedding=None):
         
+        
+        train_movie=self.train_df['item_id'].unique()
+        test_movie=self.test_org['item_id'].unique()
+        diff=np.setdiff1d(test_movie,train_movie)
+
+
         test_df,user_list,item_ids,catcols=self.test_data_generator()
         user_list=user_list.astype(int).unique().tolist()
         #movie_list=movie_list.tolist()
@@ -110,7 +118,7 @@ class Emb_Test:
             else:
                 X_cat=temp[catcols].values
 
-        
+            
             X_cat=torch.tensor(X_cat, dtype=torch.int64)
             X_cont=temp.drop(catcols,axis=1).values
             X_cont=torch.tensor(X_cont, dtype=torch.float32)
@@ -141,6 +149,7 @@ class Emb_Test:
             cur_user_test=cur_user_test[:,1]
             cur_user_test=np.unique(cur_user_test)
             cur_user_test=cur_user_test.tolist()
+            cur_user_test=np.setdiff1d(cur_user_test,diff,assume_unique=True)
             if(len(cur_user_test)==0 or len(cur_user_test)<self.args.topk):
                 continue
             print("real product code: ",cur_user_test[:])

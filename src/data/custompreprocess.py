@@ -92,6 +92,7 @@ class CustomOneHot:
         for i in range(user_embedding.shape[1]):
             user_embedding_df['user_embedding_'+str(i)]=user_embedding[:,i]
 
+        items=sorted(self.item_df['item_id'].unique())
         for i in range(item_embedding.shape[1]):
             item_embedding_df['item_embedding_'+str(i)]=item_embedding[:,i]
         
