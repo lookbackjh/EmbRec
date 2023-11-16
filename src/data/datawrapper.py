@@ -1,5 +1,7 @@
 from src.data.movielens100k import Movielens100k
 from src.data.movielens1m import Movielens1m
+from src.data.shoppingdata import ShoppingData
+from src.data.movielens10m import Movielens10m
 class DataWrapper:
 
     def __init__(self,args) -> None:
@@ -9,6 +11,11 @@ class DataWrapper:
             self.data=Movielens100k('dataset/ml-100k','u.data', args.fold)
         elif args.datatype=="ml1m":
             self.data=Movielens1m(args)
+        elif args.datatype=="shopping":
+            self.data=ShoppingData(args)
+        elif args.datatype=="ml10m":
+            self.data=Movielens10m(args)
+
         else:
             raise NotImplementedError
 

@@ -26,7 +26,7 @@ class NegativeSampler:
         c_zero = self.args.c_zeros
         UF = np.array(df["user_frequency"].astype("float"), dtype=float)
         UF /= uu_sum
-        IF = np.array(df["movie_frequency"].astype("float"), dtype=float)
+        IF = np.array(df["item_frequency"].astype("float"), dtype=float)
         IF /= ii_sum
         Fs = alpha * beta * IF * UF
         Fs_gamma = Fs ** gamma
