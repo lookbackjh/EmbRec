@@ -51,9 +51,9 @@ class ShoppingData:
         #user_info['user_id']=user_info.index
         #user_info=pd.get_dummies(columns=['occupation'],data=user_info)
         user_info.drop(['Unnamed: 0'],axis=1,inplace=True) 
-        user_info['gender'] = [1 if i == 'M' else 0 for i in user_info['gender']]
+        user_info['GENDER'] = [1 if i == 'M' else 0 for i in user_info['GENDER']]
         # want to discretize age category  
-        user_info['age'] = pd.cut(user_info['age'], bins=[0, 10, 20, 30, 40, 50, 60, 70, 80, 90], labels=[0, 1, 2, 3, 4, 5, 6, 7, 8])
+        user_info['AGE'] = pd.cut(user_info['AGE'], bins=[0, 10, 20, 30, 40, 50, 60, 70, 80, 90], labels=[0, 1, 2, 3, 4, 5, 6, 7, 8])
         #user_info['user_id']=user_info['user_id']+1
 
         return user_info

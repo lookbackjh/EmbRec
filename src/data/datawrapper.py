@@ -2,6 +2,7 @@ from src.data.movielens100k import Movielens100k
 from src.data.movielens1m import Movielens1m
 from src.data.shoppingdata import ShoppingData
 from src.data.movielens10m import Movielens10m
+from src.data.frappe import Frappe
 class DataWrapper:
 
     def __init__(self,args) -> None:
@@ -15,6 +16,8 @@ class DataWrapper:
             self.data=ShoppingData(args)
         elif args.datatype=="ml10m":
             self.data=Movielens10m(args)
+        elif args.datatype=="frappe":
+            self.data=Frappe(args)
 
         else:
             raise NotImplementedError
