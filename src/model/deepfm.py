@@ -26,6 +26,18 @@ class DeepFM(pl.LightningModule):
         self.args=args
         #self.sig=nn.Sigmoid()
 
+    def l2norm(self):
+
+        reg=0
+        for param in self.linear.parameters():
+            reg+=torch.norm(param)**2
+        for param in self.embedding.parameters():
+            reg+=torch.norm(param)**2
+        for param in self.mlp.parameters():
+            reg+=torch.norm(param)**2
+        return reg*0.01
+
+
     def mse(self, y_pred, y_true):
         return self.bceloss(y_pred, y_true.float())
 
@@ -34,10 +46,6 @@ class DeepFM(pl.LightningModule):
         return self.mlp(x)
     
 
-    def l2norm(self):
-        
-        for param in self.parameters():
-            param.data = param.data / torch.norm(param.data, 2)
         
 
     def loss(self, y_pred, y_true, c_values):
@@ -48,6 +56,8 @@ class DeepFM(pl.LightningModule):
         #l2_reg = torch.norm(self.w) + torch.norm(self.v) # L2 regularization
 
         loss_y=weighted_bce.mean() #+ self.args.weight_decay * l2_reg
+        
+        loss_y+=self.l2norm()
         
         return loss_y
     
