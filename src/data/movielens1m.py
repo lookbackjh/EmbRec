@@ -25,7 +25,7 @@ class Movielens1m:
 
     def train_test_getter(self):
         train=pd.read_csv('dataset/ml-1m/ratings.dat',sep='::',header=None, names=['user_id','movie_id','rating','timestamp'],encoding='latin-1')
-        # train=train.sort_values(by=['user_id','timestamp'])
+        train=train.sort_values(by=['user_id','timestamp'])
         # train_list=[]
         # test_list=[]
         # user_ids=train['user_id'].unique()

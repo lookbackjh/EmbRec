@@ -35,7 +35,7 @@ class DeepFM(pl.LightningModule):
             reg+=torch.norm(param)**2
         for param in self.mlp.parameters():
             reg+=torch.norm(param)**2
-        return reg*0.01
+        return reg*self.args.weight_decay
 
 
     def mse(self, y_pred, y_true):
@@ -58,7 +58,7 @@ class DeepFM(pl.LightningModule):
         loss_y=weighted_bce.mean() #+ self.args.weight_decay * l2_reg
         
         loss_y+=self.l2norm()
-        
+
         return loss_y
     
 

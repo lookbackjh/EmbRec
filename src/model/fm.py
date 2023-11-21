@@ -13,6 +13,7 @@ class FactorizationMachine(pl.LightningModule):
         self.interaction=FM_Interaction(args,field_dims)
         self.bceloss=nn.BCEWithLogitsLoss() # since bcewith logits is used, we don't need to add sigmoid layer in the end
         self.lr=args.lr
+        self.args=args
 
 
     def l2norm(self):
@@ -23,7 +24,7 @@ class FactorizationMachine(pl.LightningModule):
             reg+=torch.norm(param)**2
         for param in self.interaction.parameters():
             reg+=torch.norm(param)**2
-        return reg*0.01
+        return reg*self.args.weight_decay
 
     def loss(self, y_pred, y_true,c_values):
         # calculate weighted mse with l2 regularization

@@ -28,6 +28,8 @@ class FeatureEmbedding(nn.Module):
         super(FeatureEmbedding, self).__init__()
         self.embedding=nn.Embedding(sum(field_dims),args.emb_dim)
         self.field_dims=field_dims
+        # for adding offset for each feature for example, movie id starts from 0, user id starts from 1000
+        # as the features should be embedded column-wise this operatation easily makes it possible
         self.offsets = np.array((0, *np.cumsum(field_dims)[:-1]), dtype=np.int64)
 
     def forward(self, x):
