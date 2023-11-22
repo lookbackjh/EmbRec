@@ -22,7 +22,7 @@ parser.add_argument('--train_ratio', type=float, default=0.7, help='training rat
 
 parser.add_argument('--num_factors', type=int, default=15, help='Number of factors for FM')
 parser.add_argument('--lr', type=float, default=0.005, help='Learning rate for fm training')
-parser.add_argument('--weight_decay', type=float, default=0.1, help='Weight decay(for both FM and autoencoder)')
+parser.add_argument('--weight_decay', type=float, default=0.00001, help='Weight decay(for both FM and autoencoder)')
 parser.add_argument('--num_epochs_ae', type=int, default=300,    help='Number of epochs')
 parser.add_argument('--num_epochs_training', type=int, default=100,    help='Number of epochs')
 
@@ -39,15 +39,15 @@ parser.add_argument('--save_model', type=bool, default=False)
 parser.add_argument('--emb_dim', type=int, default=32, help='embedding dimension for DeepFM')
 parser.add_argument('--num_embedding', type=int, default=200, help='Number of embedding for autoencoder') 
 parser.add_argument('--embedding_type', type=str, default='SVD', help='AE or SVD or original')
-parser.add_argument('--model_type', type=str, default='fm', help='fm or deepfm')
-parser.add_argument('--topk', type=int, default=5, help='top k items to recommend')
+parser.add_argument('--model_type', type=str, default='deepfm', help='fm or deepfm')
+parser.add_argument('--topk', type=int, default=10, help='top k items to recommend')
 parser.add_argument('--fold', type=int, default=1, help='fold number')
 parser.add_argument('--isuniform', type=bool, default=True, help='isuniform')
 parser.add_argument('--ratio_negative', type=int, default=0.2, help='ratio_negative')
 parser.add_argument('--auto_lr', type=float, default=0.01, help='autoencoder learning rate')
 parser.add_argument('--k', type=int, default=10, help='autoencoder k')
 parser.add_argument('--num_eigenvector', type=int, default=16,help='Number of eigenvectors for SVD')
-parser.add_argument('--datatype', type=str, default="frappe",help='ml100k or ml1m or shopping or googlebook or ml10m')
+parser.add_argument('--datatype', type=str, default="ml1m",help='ml100k or ml1m or shopping or googlebook or ml10m')
 parser.add_argument('--c_zeros', type=int, default=5,help='c_zero for negative sampling')
 
 
@@ -62,10 +62,13 @@ def getdata(args):
     dataset=DataWrapper(args)
     train_df, test, item_info, user_info, ui_matrix =dataset.get_data()
     train=train_df.copy(deep=True)
+    cat_columns,cont_columns=dataset.get_columns()
 
     # do negative sampling and merge with item_info and user_info, negative sampling based on c
     ns=NegativeSampler(args,train,item_info,user_info)
     nssampled=ns.negativesample(args.isuniform)
+
+
     target=nssampled['target'].to_numpy()
     c=nssampled['c'].to_numpy()
     nssampled.drop(['target','c'],axis=1,inplace= True)
@@ -75,9 +78,7 @@ def getdata(args):
 
     user_embedding,item_embedding= SVD(args).get_embedding(ui_matrix)
 
-    cat_columns=nssampled.columns
-
-
+    #cat_columns=nssampled.columns
     merger=CustomOneHot(args,nssampled,item_info,user_info)
     new_train_df=merger.embedding_merge(user_embedding=user_embedding,item_embedding=item_embedding)
 

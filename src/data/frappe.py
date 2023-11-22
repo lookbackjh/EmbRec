@@ -8,19 +8,20 @@ class Frappe:
     def data_getter(self):
         
         #train, test loading for each fold
-        train,test=self.train_test_getter()
+        self.train,self.test=self.train_test_getter()
+        self.train=self.train.rename(columns={'item':'item_id'})
+        self.test=self.test.rename(columns={'item':'item_id'})
         movie_info=self.movie_getter()
         user_info=self.user_getter()
         ui_matrix=self.get_user_item_matrix()
 
         # change column names movie_id to item_id
-        train=train.rename(columns={'item':'item_id'})
-        test=test.rename(columns={'item':'item_id'})
+
         # add column item_id to movie_info
         movie_info.rename(columns={'item':'item_id'},inplace=True)
 
 
-        return train,test,movie_info,user_info,ui_matrix
+        return self.train,self.test,movie_info,user_info
     
 
     def train_test_getter(self):

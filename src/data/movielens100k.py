@@ -9,20 +9,23 @@ class Movielens100k:
     def data_getter(self):
         
         #train, test loading for each fold
-        train=pd.read_csv('dataset/ml-100k/u'+str(self.fold)+'.base',sep='\t',header=None, names=['user_id','movie_id','rating','timestamp'],encoding='latin-1')
-        test=pd.read_csv('dataset/ml-100k/u'+str(self.fold)+'.test',sep='\t',header=None, names=['user_id','movie_id','rating','timestamp'],encoding='latin-1')
+        self.train=pd.read_csv('dataset/ml-100k/u'+str(self.fold)+'.base',sep='\t',header=None, names=['user_id','movie_id','rating','timestamp'],encoding='latin-1')
+        self.test=pd.read_csv('dataset/ml-100k/u'+str(self.fold)+'.test',sep='\t',header=None, names=['user_id','movie_id','rating','timestamp'],encoding='latin-1')
+        self.train=self.train.rename(columns={'movie_id':'item_id'})
+        self.test=self.test.rename(columns={'movie_id':'item_id'})
+        
+        
         movie_info=self.movie_getter()
         user_info=self.user_getter()
-        ui_matrix=self.get_user_item_matrix()
+        #ui_matrix=self.get_user_item_matrix()
 
         # change column names movie_id to item_id
-        train=train.rename(columns={'movie_id':'item_id'})
-        test=test.rename(columns={'movie_id':'item_id'})
+
         # add column item_id to movie_info
         movie_info.rename(columns={'movie_id':'item_id'},inplace=True)
 
 
-        return train,test,movie_info,user_info,ui_matrix
+        return self.train,self.test,movie_info,user_info
     
     def movie_getter(self):
         
