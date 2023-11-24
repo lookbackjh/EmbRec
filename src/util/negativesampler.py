@@ -49,8 +49,8 @@ class NegativeSampler:
 
         print("Negative Sampling Started")
 
-        for customer in tqdm.tqdm(unique_customers):
-            unique_products = df['item_id'].unique()
+        for customer in tqdm.tqdm(unique_customers[:]):
+            #unique_products = df['item_id'].unique()
 
 
             customer_frequency = df[df['user_id'] == customer]['user_frequency'].iloc[0]

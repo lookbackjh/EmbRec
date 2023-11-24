@@ -13,7 +13,7 @@ class Frappe:
         self.test=self.test.rename(columns={'item':'item_id'})
         movie_info=self.movie_getter()
         user_info=self.user_getter()
-        ui_matrix=self.get_user_item_matrix()
+        #ui_matrix=self.get_user_item_matrix()
 
         # change column names movie_id to item_id
 
@@ -59,6 +59,7 @@ class Frappe:
         #read movie data
         movie_info=pd.read_csv('dataset/frappe/meta_app_item_info.csv')
         movie_info=movie_info.rename(columns={'rating':'quality'})
+        movie_info.drop(columns=['name'], inplace=True) 
         return movie_info
 
     def user_getter(self):

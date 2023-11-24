@@ -3,6 +3,7 @@ from src.data.movielens1m import Movielens1m
 from src.data.shoppingdata import ShoppingData
 from src.data.movielens10m import Movielens10m
 from src.data.frappe import Frappe
+from src.data.goodbook import GoodBook
 import tqdm
 class DataWrapper:
 
@@ -19,7 +20,8 @@ class DataWrapper:
             self.data=Movielens10m(args)
         elif args.datatype=="frappe":
             self.data=Frappe(args) # 수정완료
-
+        elif args.datatype=="goodbook":
+            self.data=GoodBook(args)
         else:
             raise NotImplementedError
 
@@ -50,14 +52,34 @@ class DataWrapper:
         
         cat_cols=[]
         cont_cols=[]
+        cat_cols.append('user_id')
+        cat_cols.append('item_id')
+
         for col in self.item_info.columns:
+            if col=='item_id':
+                continue
             if self.item_info[col].dtype=='object' :
                 cat_cols.append(col)
             elif self.item_info[col].dtype=='int64' :
                 cat_cols.append(col)
             elif self.item_info[col].dtype=='float64' :
                 cont_cols.append(col)
+
+
+        for col in self.user_info.columns:
+            if col=='user_id':
+                continue
+
+            if self.user_info[col].dtype=='object' :
+                cat_cols.append(col)
+            elif self.user_info[col].dtype=='int64' :
+                cat_cols.append(col)
+            elif self.user_info[col].dtype=='float64' :
+                cont_cols.append(col)
         
+
+        
+
         return cat_cols,cont_cols
     
 

@@ -81,6 +81,10 @@ class Movielens1m:
         user_info['age'] = pd.cut(user_info['age'], bins=[0, 10, 20, 30, 40, 50, 60, 70, 80, 90], labels=[0, 1, 2, 3, 4, 5, 6, 7, 8])
         #user_info['user_id']=user_info['user_id']+1
 
+        user_info['age']=user_info['age'].astype(int)
+        user_info['gender']=user_info['gender'].astype(int)
+        user_info['user_id']=user_info['user_id'].astype(int)
+
         return user_info
     
     def get_user_item_matrix(self):
