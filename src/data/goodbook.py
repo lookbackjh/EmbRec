@@ -28,6 +28,7 @@ class GoodBook:
         train['timestamp']=0 # as there are no timestamps in the dataset, we aribitrarily set them to 0
         
         train=train.sort_values(by=['user_id'])
+        train=train[:len(train)//3]
 
         train_data=train.groupby('user_id').apply(lambda x: x.iloc[:int(len(x)*0.7)])
         test_data=train.groupby('user_id').apply(lambda x: x.iloc[int(len(x)*0.7):])

@@ -16,9 +16,9 @@ class DeepFM(pl.LightningModule):
         self.fm = FactorizationMachine(args, field_dims)
         self.embedding = FeatureEmbedding(args, field_dims)
         if args.embedding_type=='SVD':
-            self.embed_output_dim = (len(field_dims) +1)* args.emb_dim
+            self.embed_output_dim = (len(field_dims) +1)* args.emb_dim + args.cont_dims-args.emb_dim
         else:
-            self. embed_output_dim = len(field_dims) * args.emb_dim
+            self. embed_output_dim = len(field_dims) * args.emb_dim+args.cont_dims
         #self.embed_output_dim = (len(field_dims) +1)* args.emb_dim
         self.mlp = MLP(args, self.embed_output_dim)
         self.bceloss=nn.BCEWithLogitsLoss() # since bcewith logits is used, we don't need to add sigmoid layer in the end
@@ -28,6 +28,7 @@ class DeepFM(pl.LightningModule):
                 nn.Linear(args.cont_dims,args.num_eigenvector*2),
                 nn.ReLU(),
                 )
+        self.field_dims=field_dims
         #self.sig=nn.Sigmoid()
 
     def l2norm(self):
@@ -71,11 +72,17 @@ class DeepFM(pl.LightningModule):
         fm_part=self.fm(x, x_cont)
         embed_x=self.embedding(x)
         if self.args.embedding_type=='SVD':
-            x_cont=x_cont.unsqueeze(1)
+            #x_cont=x_cont.unsqueeze(1)
+
+            # embed x: batch_size * num_features * num_embedding want to reshape to batch_size * (num_features*num_embedding)
+            embed_x=embed_x.view(-1, (len(self.field_dims))*self.args.emb_dim)
+
+            # if x_cont is not 0
             new_x=torch.cat((embed_x,x_cont),1)
-            new_x=new_x.view(-1, self.embed_output_dim)
+            #new_x=new_x.view(-1, self.embed_output_dim)
         else:
-            new_x=embed_x.view(-1, self.embed_output_dim)
+            embed_x=embed_x.view(-1, (len(self.field_dims))*self.args.emb_dim)
+            new_x=torch.cat((embed_x,x_cont),1)
 
         deep_part=self.mlp(new_x)
         #x=x.float()

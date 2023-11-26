@@ -34,6 +34,9 @@ class Emb_Test:
 
 
         # make a dataframe that has all the user_id, item_id pairs
+        #tqdm  tochecek times for code below
+
+
         npuser_movie=np.zeros((len(user_ids)*len(item_ids),4))
         npuser_movie=npuser_movie.astype(int)
         npuser_movie[:,0]=np.repeat(user_ids,len(item_ids))
@@ -79,18 +82,26 @@ class Emb_Test:
 
         item_embedding_df['item_id']=sorted(userinfoadded['item_id'].unique())
 
-        for i in range(self.user_embedding.shape[1]):
+        for i in tqdm.tqdm(range(self.user_embedding.shape[1])):
             user_embedding_df['user_embedding_'+str(i)]=self.user_embedding[:,i]
 
-        for i in range(self.item_embedding.shape[1]):
+        for i in tqdm.tqdm(range(self.item_embedding.shape[1])):
             item_embedding_df['item_embedding_'+str(i)]=self.item_embedding[:,i]
         
+        tqdm.tqdm.pandas()
+#call the progress_apply feature with a dummy lambda function
         
-        #없는건 0으로 처리해줘야함. 
+        #movie_emb_included_df=pd.merge(userinfoadded.set_index('item_id'), item_embedding_df,on='item_id',how='left').progress_apply(lambda x: x)
+        #user_emb_included_df=pd.merge(movie_emb_included_df.set_index('user_id'),user_embedding_df, on='user_id',how='left').progress_apply(lambda x: x)
+        
+        # please change operation above to join
+        # do not use merge
+        movie_emb_included_df=userinfoadded.set_index('item_id').join(item_embedding_df,on='item_id',how='left').progress_apply(lambda x: x)
+        user_emb_included_df=movie_emb_included_df.set_index('user_id').join(user_embedding_df, on='user_id',how='left').progress_apply(lambda x: x)
 
-        movie_emb_included_df=pd.merge(userinfoadded.set_index('item_id'), item_embedding_df,on='item_id',how='left')
-        user_emb_included_df=pd.merge(movie_emb_included_df.set_index('user_id'),user_embedding_df, on='user_id',how='left')
-        
+
+
+
         # cat_df=user_emb_included_df[cat_cols]
         # cat_df=cat_df.astype(int)
         for col in self.catcol:
@@ -210,6 +221,9 @@ class Emb_Test:
   
             print("precision: ",precision)
         print("average precision: ",np.mean(precisions))
+        # totla user number and total item number
+        print("total user number: ",len(user_list))
+        print("total item number: ",len(self.train_df['item_id'].unique()))
         return np.mean(precisions)
 
         

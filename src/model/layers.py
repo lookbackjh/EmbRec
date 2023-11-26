@@ -6,6 +6,7 @@ class MLP(nn.Module):
 
     def __init__(self, args,input_size):
         super(MLP, self).__init__()
+        self.args=args
         self.deep_layers = nn.ModuleList()
         for i in range(args.num_deep_layers):
             self.deep_layers.append(nn.Linear(input_size, args.deep_layer_size))
