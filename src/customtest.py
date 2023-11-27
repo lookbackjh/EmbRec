@@ -67,8 +67,9 @@ class Emb_Test:
         #     if col=='user_id':
         #         continue
         #     self.user_df[col]=self.le[col].transform(self.user_df[col])
-
+        #npembedding=np.zeros(len(user_id)*)
         movieinfoadded=pd.merge(user_movie,self.movie_df,on='item_id',how='left')
+        
 
         userinfoadded=pd.merge(movieinfoadded,self.user_df,on='user_id',how='left')
 
@@ -88,7 +89,6 @@ class Emb_Test:
         for i in tqdm.tqdm(range(self.item_embedding.shape[1])):
             item_embedding_df['item_embedding_'+str(i)]=self.item_embedding[:,i]
         
-        tqdm.tqdm.pandas()
 #call the progress_apply feature with a dummy lambda function
         
         #movie_emb_included_df=pd.merge(userinfoadded.set_index('item_id'), item_embedding_df,on='item_id',how='left').progress_apply(lambda x: x)
@@ -96,9 +96,24 @@ class Emb_Test:
         
         # please change operation above to join
         # do not use merge
-        movie_emb_included_df=userinfoadded.set_index('item_id').join(item_embedding_df,on='item_id',how='left').progress_apply(lambda x: x)
-        user_emb_included_df=movie_emb_included_df.set_index('user_id').join(user_embedding_df, on='user_id',how='left').progress_apply(lambda x: x)
+        movie_emb_np=np.zeros((len(user_ids)*len(item_ids),self.item_embedding.shape[1]))
+        for i in tqdm.tqdm(range(0,(self.item_embedding.shape[1]))):
+            movie_emb_np[:,i]=np.tile(self.item_embedding[:,i],len(user_ids))
 
+        user_emb_np=np.zeros((len(user_ids)*len(item_ids),self.user_embedding.shape[1]))
+        for i in tqdm.tqdm(range(0,self.user_embedding.shape[1])):
+            user_emb_np[:,i]=np.repeat(self.user_embedding[:,i],len(item_ids))
+
+
+        movie_emb_df=pd.DataFrame(movie_emb_np,columns=item_embedding_df.columns.tolist()[1:]) 
+        user_emb_df=pd.DataFrame(user_emb_np,columns=user_embedding_df.columns.tolist()[1:])
+        # movie_emb_included_df=userinfoadded.set_index('item_id').join(item_embedding_df,on='item_id',how='left')
+        # user_emb_included_df=movie_emb_included_df.set_index('user_id').join(user_embedding_df, on='user_id',how='left')
+        #pd.concat([userinfoadded,movie_emb_df],axis=1)
+        movie_emb_included_df=pd.concat([userinfoadded,movie_emb_df],axis=1)
+        del userinfoadded
+        user_emb_included_df=pd.concat([movie_emb_included_df,user_emb_df],axis=1)
+        del movie_emb_included_df
 
 
 

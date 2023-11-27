@@ -167,7 +167,7 @@ if __name__=='__main__':
     args = parser.parse_args("")
     svdresults=[]
     originalresults=[]
-    embedding_type=['SVD']
+    embedding_type=['SVD','original']
     model_type=['deepfm','fm']
     svd_test_time=[]
     original_test_time=[]
