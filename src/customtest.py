@@ -2,27 +2,26 @@ import pandas as pd
 import numpy as np
 from src.data.custompreprocess import CustomOneHot
 from src.data.fm_preprocess import FM_Preprocessing
+from src.util.preprocessor import Preprocessor
 import tqdm
 import torch
 import copy
 
 class Emb_Test:
 
-    def __init__(self, args,model,train_df,test_df, le, movie_df, user_df,user_embedding,item_embedding,catcol,contcol,train_org) -> None:
+    def __init__(self, args,model,data:Preprocessor) -> None:
 
         self.args = args
-        self.train_df = train_df
-        self.test_org = test_df
-        self.movie_df = movie_df
-        self.user_df = user_df
         self.model=model
-        self.le=le  # le is labelencoder
-        self.user_embedding=user_embedding
-        self.item_embedding=item_embedding
-        self.catcol=catcol
-        self.contcol=contcol
-        self.train_org=train_org
-        #self.original_df=pd.read_csv('dataset/ml-100k/u'+str(args.fold)+'.base',sep='\t',header=None, names=['user_id','item_id','rating','timestamp'],encoding='latin-1')
+
+    
+        self.train_df,self.test_org = data.get_train_test()
+        self.user_df,self.item_df = data.get_user_item_info()
+        self.le=data.get_label_encoder()  # le is labelencoder
+        self.user_embedding,self.item_embedding=data.get_embedding()
+        self.catcol,self.contcol=data.get_column_info()        
+        self.train_org=data.get_original_train()
+    
 
 
     def test_data_generator(self):
@@ -48,7 +47,7 @@ class Emb_Test:
 
         user_movie=pd.DataFrame(npuser_movie,columns=['user_id','item_id','target','c'])
 
-        #c=CustomOneHot(self.args,user_movie,self.movie_df,self.user_df)
+        #c=CustomOneHot(self.args,user_movie,self.item_df,self.user_df)
         user_list=user_movie['user_id']
         movie_list=user_movie['item_id']
         #user_movie=c.movieonehot()
@@ -58,17 +57,17 @@ class Emb_Test:
         c=user_movie['c'].astype(int)
         user_movie.drop(['target','c'],axis=1,inplace=True)
 
-        # for col in self.movie_df.columns:
+        # for col in self.item_df.columns:
         #     if col=='item_id':
         #         continue
-        #     self.movie_df[col]=self.le[col].transform(self.movie_df[col])
+        #     self.item_df[col]=self.le[col].transform(self.item_df[col])
         
         # for col in self.user_df.columns:
         #     if col=='user_id':
         #         continue
         #     self.user_df[col]=self.le[col].transform(self.user_df[col])
         #npembedding=np.zeros(len(user_id)*)
-        movieinfoadded=pd.merge(user_movie,self.movie_df,on='item_id',how='left')
+        movieinfoadded=pd.merge(user_movie,self.item_df,on='item_id',how='left')
         
 
         userinfoadded=pd.merge(movieinfoadded,self.user_df,on='user_id',how='left')
@@ -107,9 +106,6 @@ class Emb_Test:
 
         movie_emb_df=pd.DataFrame(movie_emb_np,columns=item_embedding_df.columns.tolist()[1:]) 
         user_emb_df=pd.DataFrame(user_emb_np,columns=user_embedding_df.columns.tolist()[1:])
-        # movie_emb_included_df=userinfoadded.set_index('item_id').join(item_embedding_df,on='item_id',how='left')
-        # user_emb_included_df=movie_emb_included_df.set_index('user_id').join(user_embedding_df, on='user_id',how='left')
-        #pd.concat([userinfoadded,movie_emb_df],axis=1)
         movie_emb_included_df=pd.concat([userinfoadded,movie_emb_df],axis=1)
         del userinfoadded
         user_emb_included_df=pd.concat([movie_emb_included_df,user_emb_df],axis=1)
