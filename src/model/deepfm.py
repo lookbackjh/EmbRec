@@ -24,10 +24,10 @@ class DeepFM(pl.LightningModule):
         self.bceloss=nn.BCEWithLogitsLoss() # since bcewith logits is used, we don't need to add sigmoid layer in the end
         self.lr=args.lr
         self.args=args
-        self.simplemlp=nn.Sequential(
-                nn.Linear(args.cont_dims,args.num_eigenvector*2),
-                nn.ReLU(),
-                )
+        # self.simplemlp=nn.Sequential(
+        #         nn.Linear(args.cont_dims,args.num_eigenvector*2),
+        #         nn.ReLU(),
+        #         )
         self.field_dims=field_dims
         #self.sig=nn.Sigmoid()
 

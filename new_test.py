@@ -25,7 +25,7 @@ parser.add_argument('--num_factors', type=int, default=15, help='Number of facto
 parser.add_argument('--lr', type=float, default=0.005, help='Learning rate for fm training')
 parser.add_argument('--weight_decay', type=float, default=0.001, help='Weight decay(for both FM and autoencoder)')
 parser.add_argument('--num_epochs_ae', type=int, default=300,    help='Number of epochs')
-parser.add_argument('--num_epochs_training', type=int, default=1,    help='Number of epochs')
+parser.add_argument('--num_epochs_training', type=int, default=50,    help='Number of epochs')
 
 parser.add_argument('--batch_size', type=int, default=1024, help='Batch size')
 parser.add_argument('--ae_batch_size', type=int, default=256, help='Batch size for autoencoder')
@@ -37,7 +37,7 @@ parser.add_argument('--seed', type=int, default=42)
 parser.add_argument('--save_model', type=bool, default=False)
 
 
-parser.add_argument('--emb_dim', type=int, default=128, help='embedding dimension for DeepFM')
+parser.add_argument('--emb_dim', type=int, default=32, help='embedding dimension for DeepFM')
 parser.add_argument('--num_embedding', type=int, default=200, help='Number of embedding for autoencoder') 
 parser.add_argument('--embedding_type', type=str, default='original', help='AE or SVD or original')
 parser.add_argument('--model_type', type=str, default='deepfm', help='fm or deepfm')
@@ -48,7 +48,7 @@ parser.add_argument('--ratio_negative', type=int, default=0.2, help='ratio_negat
 parser.add_argument('--auto_lr', type=float, default=0.01, help='autoencoder learning rate')
 parser.add_argument('--k', type=int, default=10, help='autoencoder k')
 parser.add_argument('--num_eigenvector', type=int, default=64,help='Number of eigenvectors for SVD')
-parser.add_argument('--datatype', type=str, default="ml100k",help='ml100k or ml1m or shopping or goodbook or frappe')
+parser.add_argument('--datatype', type=str, default="frappe",help='ml100k or ml1m or shopping or goodbook or frappe')
 parser.add_argument('--c_zeros', type=int, default=5,help='c_zero for negative sampling')
 parser.add_argument('--cont_dims', type=int, default=0,help='continuous dimension(that changes for each dataset))')
 
