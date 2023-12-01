@@ -103,11 +103,28 @@ class Preprocessor:
 
         item_embedding_df['item_id']=sorted(self.ns_sampled_df['item_id'].unique())
 
+        user_embedding_columns=[]
+        item_embedding_columns=[]
         for i in range(user_embedding.shape[1]):
-            user_embedding_df['user_embedding_'+str(i)]=user_embedding[:,i]
-
+            user_embedding_columns.append('user_embedding_'+str(i))
+        
         for i in range(item_embedding.shape[1]):
-            item_embedding_df['item_embedding_'+str(i)]=item_embedding[:,i]
+            item_embedding_columns.append('item_embedding_'+str(i))
+
+        ue_df=pd.DataFrame(user_embedding,columns=user_embedding_columns)
+        ie_df=pd.DataFrame(item_embedding,columns=item_embedding_columns)
+
+        user_embedding_df=pd.concat([user_embedding_df,ue_df],axis=1)
+        item_embedding_df=pd.concat([item_embedding_df,ie_df],axis=1)
+
+
+
+
+        # for i in range(user_embedding.shape[1]):
+        #     user_embedding_df['user_embedding_'+str(i)]=user_embedding[:,i]
+
+        # for i in range(item_embedding.shape[1]):
+        #     item_embedding_df['item_embedding_'+str(i)]=item_embedding[:,i]
         
         
         movie_emb_included_df=pd.merge(self.ns_sampled_df.set_index('item_id'), item_embedding_df,on='item_id',how='left')
