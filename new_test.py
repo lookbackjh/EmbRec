@@ -14,6 +14,7 @@ from src.data.custompreprocess import CustomOneHot
 import time
 import numpy as np
 #copy
+import json
 from copy import deepcopy
 from src.util.preprocessor import Preprocessor
 parser = argparse.ArgumentParser()
@@ -28,7 +29,7 @@ parser.add_argument('--num_epochs_ae', type=int, default=300,    help='Number of
 parser.add_argument('--num_epochs_training', type=int, default=50,    help='Number of epochs')
 
 parser.add_argument('--batch_size', type=int, default=1024, help='Batch size')
-parser.add_argument('--ae_batch_size', type=int, default=256, help='Batch size for autoencoder')
+#parser.add_argument('--ae_batch_size', type=int, default=256, help='Batch size for autoencoder')
 
 parser.add_argument('--num_workers', type=int, default=10, help='Number of workers for dataloader')
 parser.add_argument('--num_deep_layers', type=int, default=2, help='Number of deep layers')
@@ -38,19 +39,20 @@ parser.add_argument('--save_model', type=bool, default=False)
 
 
 parser.add_argument('--emb_dim', type=int, default=32, help='embedding dimension for DeepFM')
-parser.add_argument('--num_embedding', type=int, default=200, help='Number of embedding for autoencoder') 
+#parser.add_argument('--num_embedding', type=int, default=200, help='Number of embedding for autoencoder') 
 parser.add_argument('--embedding_type', type=str, default='original', help='AE or SVD or original')
 parser.add_argument('--model_type', type=str, default='deepfm', help='fm or deepfm')
 parser.add_argument('--topk', type=int, default=5, help='top k items to recommend')
-parser.add_argument('--fold', type=int, default=1, help='fold number')
-parser.add_argument('--isuniform', type=bool, default=True, help='isuniform')
-parser.add_argument('--ratio_negative', type=int, default=0.2, help='ratio_negative')
-parser.add_argument('--auto_lr', type=float, default=0.01, help='autoencoder learning rate')
-parser.add_argument('--k', type=int, default=10, help='autoencoder k')
-parser.add_argument('--num_eigenvector', type=int, default=64,help='Number of eigenvectors for SVD')
-parser.add_argument('--datatype', type=str, default="frappe",help='ml100k or ml1m or shopping or goodbook or frappe')
+parser.add_argument('--fold', type=int, default=1, help='fold number for folded dataset')
+parser.add_argument('--isuniform', type=bool, default=True, help='true if uniform false if not')
+parser.add_argument('--ratio_negative', type=int, default=0.5, help='negative sampling ratio rate for each user')
+#parser.add_argument('--auto_lr', type=float, default=0.01, help='autoencoder learning rate')
+#parser.add_argument('--k', type=int, default=10, help='autoencoder k')
+parser.add_argument('--num_eigenvector', type=int, default=16,help='Number of eigenvectors for SVD')
+parser.add_argument('--datatype', type=str, default="shopping",help='ml100k or ml1m or shopping or goodbook or frappe')
 parser.add_argument('--c_zeros', type=int, default=5,help='c_zero for negative sampling')
 parser.add_argument('--cont_dims', type=int, default=0,help='continuous dimension(that changes for each dataset))')
+parser.add_argument('--shopping_file_num', type=int, default=147,help='name of shopping file choose from 147 or  148 or 149')
 
 
 args = parser.parse_args("")
@@ -66,17 +68,18 @@ def getdata(args):
     train_df, test, item_info, user_info, ui_matrix =dataset.get_data()
     cat_columns,cont_cols=dataset.get_col_type()
     #those are basic dataframes that we can get from various datasets
-
     preprocessor=Preprocessor(args,train_df,test,user_info,item_info,ui_matrix,cat_columns,cont_cols)
     #preprocessor is a class that preprocesses dataframes and returns train_df, test_df, item_info, user_info, useritem_matrix, cat_columns, cont_columns, label_encoders, user_embedding, item_embedding
-
     return preprocessor
 
 
 def trainer(args,data:Preprocessor):
+    data.label_encode()
     items,cons=data.get_catcont_train()
     target,c=data.get_target_c()
-    field_dims=data.get_field_dims()    
+    field_dims=data.get_field_dims()
+
+
     if args.model_type=='fm':
         model=FactorizationMachine(args,field_dims)
     else:
@@ -99,20 +102,47 @@ if __name__=='__main__':
     args = parser.parse_args("")
     svdresults=[]
     originalresults=[]
+    results={}
+    # if args.datatype=='goodbook':
+    #     args.eigenvector=512
+    # elif args.datatype=='ml100k':
+    #     args.eigenvector=16
+    # elif args.datatype=='ml1m':
+    #     args.eigenvector=32
+    # elif args.datatype=='frappe':
+    #     args.eigenvector=32
+
+    data_types=['goodbook']
     embedding_type=['SVD','original']
     model_type=['fm','deepfm']
-    results={}
-    for md in model_type:
-        args.model_type=md
-        for embedding in embedding_type:
-            args.embedding_type=embedding
-        
+    shopping_file_num=[147,148,149]
+    isuniform=[True,False]
+    for u in isuniform:
+        args.isuniform=u
+        for s in shopping_file_num:
+            args.shopping_file_num=s
             data_info=getdata(args)
-            model=trainer(args,data_info)
-            tester=Emb_Test(args,model,data_info)
-            result=tester.test()
-            results[md+embedding]=result
-                #results[md+embedding]=result
-    
-    print(args.isuniform)
-    print(results)
+            for md in model_type:
+                args.model_type=md
+                for embedding in embedding_type:
+                    args.embedding_type=embedding
+                
+                    
+                    model=trainer(args,data_info)
+                    tester=Emb_Test(args,model,data_info)
+                    result=tester.test()
+                    results[md+embedding]=result
+                        #results[md+embedding]=result
+                    
+
+            dataset_name=args.datatype
+            num_eigenvector=args.num_eigenvector
+            json_name=dataset_name+'_'+'eigen_'+str(num_eigenvector)+'_'+'uniform'+str(args.isuniform)+'.json'
+            # want to save in results folder
+            #folder
+            foldername='results/'+dataset_name+'/'
+            if dataset_name=='shopping':
+                json_name=dataset_name+'_'+str(args.shopping_file_num)+'_'+'eigen_'+str(num_eigenvector)+'_'+'uniform'+str(args.isuniform)+'.json'
+            with open(foldername+json_name, 'w') as fp:
+                json.dump(results, fp)
+

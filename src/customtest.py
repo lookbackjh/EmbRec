@@ -73,9 +73,10 @@ class Emb_Test:
     
     def test(self,user_embedding=None,movie_embedding=None):
 
-        for col in self.train_org.columns:
+        train_org=self.train_org.copy(deep=True)
+        for col in train_org.columns:
             if col=='user_id' or col=='item_id':
-                self.train_org[col]=self.le[col].transform(self.train_org[col])
+                train_org[col]=self.le[col].transform(train_org[col])
 
         user_list=self.le['user_id'].classes_
         self.model.eval()
@@ -104,13 +105,15 @@ class Emb_Test:
             #swith tensor to list
             topidx=topidx.tolist()
 
+            if customerid not in self.test_org['user_id'].unique():
+                continue
 
             print("customer id: ",customerid, end=" ")
             ml=list(self.le['item_id'].inverse_transform(temp['item_id'].unique()))
             ml=np.array(ml)
             # reorder movie_list
             ml=ml[topidx]
-            cur_userslist=np.array(self.train_org[(self.train_org['user_id'])==self.le['user_id'].transform([customerid])[0]]['item_id'].unique())
+            cur_userslist=np.array(train_org[(train_org['user_id'])==self.le['user_id'].transform([customerid])[0]]['item_id'].unique())
             
             # 여기 안본게 포함되어있을 수 있음 이거 처리해주어ㅑ하미
             cur_userslist=self.le['item_id'].inverse_transform(cur_userslist)
@@ -119,8 +122,7 @@ class Emb_Test:
             real_rec=np.setdiff1d(ml,cur_userslist,assume_unique=True)
             
 
-            if customerid not in self.test_org['user_id'].unique():
-                continue
+
 
             print("top {} recommended product code: ".format(self.args.topk),real_rec[:self.args.topk])
 

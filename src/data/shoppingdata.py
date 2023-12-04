@@ -10,19 +10,21 @@ class ShoppingData:
         train,test=self.train_test_getter()
         movie_info=self.movie_getter()
         user_info=self.user_getter()
-        ui_matrix=self.get_user_item_matrix()
+        #ui_matrix=self.get_user_item_matrix()
 
-        train.rename(columns={'product_id':'item_id'},inplace=True)
-        test.rename(columns={'product_id':'item_id'},inplace=True)
+        # train.rename(columns={'product_id':'item_id'},inplace=True)
+        # test.rename(columns={'product_id':'item_id'},inplace=True)
         # add column item_id to movie_info
         movie_info.rename(columns={'product_id':'item_id'},inplace=True)
 
 
-        return train,test,movie_info,user_info,ui_matrix
+        return train,test,movie_info,user_info
     
 
     def train_test_getter(self):
-        train=pd.read_pickle('dataset/shopping/shopping_data.pickle')
+        #train=pd.read_csv('dataset/shopping/ratings_148.csv')
+        filestr='dataset/shopping/ratings_'+str(self.args.shopping_file_num)+'.csv'
+        train=pd.read_csv(filestr)
         train=train.sort_values(by=['user_id','timestamp'])
         train_list=[]
         test_list=[]
@@ -39,7 +41,8 @@ class ShoppingData:
     def movie_getter(self):
         
         #read movie data
-        movie_info=movie_info=pd.read_csv('dataset/shopping/product_info.csv')
+        movie_info=pd.read_csv('dataset/shopping/item_info.csv')
+        #movie_info.drop('category_depth',axis=1,inplace=True)
 
         return movie_info
 
@@ -50,10 +53,12 @@ class ShoppingData:
         #user_info.drop(['zipcode'],axis=1,inplace=True)
         #user_info['user_id']=user_info.index
         #user_info=pd.get_dummies(columns=['occupation'],data=user_info)
-        user_info.drop(['Unnamed: 0'],axis=1,inplace=True) 
-        user_info['GENDER'] = [1 if i == 'M' else 0 for i in user_info['GENDER']]
+        #user_info.drop(['Unnamed: 0'],axis=1,inplace=True) 
+        user_info['gender'] = [1 if i == 'M' else 0 for i in user_info['gender']]
+        user_info['gender']= user_info['gender'].astype(int)
         # want to discretize age category  
-        user_info['AGE'] = pd.cut(user_info['AGE'], bins=[0, 10, 20, 30, 40, 50, 60, 70, 80, 90], labels=[0, 1, 2, 3, 4, 5, 6, 7, 8])
+        user_info['age'] = pd.cut(user_info['age'], bins=[0, 10, 20, 30, 40, 50, 60, 70, 80, 90], labels=[0, 1, 2, 3, 4, 5, 6, 7, 8])
+        user_info['age'] = user_info['age'].astype(int)
         #user_info['user_id']=user_info['user_id']+1
 
         return user_info
@@ -62,7 +67,7 @@ class ShoppingData:
 
         #get useritem matrix
         train,_=self.train_test_getter()
-        useritem_matrix=train.pivot_table(index='user_id',columns='product_id',values='rating')
+        useritem_matrix=train.pivot_table(index='user_id',columns='item_id',values='rating')
         useritem_matrix=useritem_matrix.fillna(0)
         useritem_matrix=useritem_matrix.astype(float)
         useritem_matrix[useritem_matrix >= 1] = 1
