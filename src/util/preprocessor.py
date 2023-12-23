@@ -188,6 +188,7 @@ class Preprocessor:
 
         self.cat_columns_temp=cat_columns
         self.cont_columns_temp=cont_columns
+        
         self.cat_train_df_temp=cat_train_df
         #self.cont_train_df_temp=cont_train_df
         self.cont_train_df_temp=cont_train_df.to_numpy()[:].astype('float32')

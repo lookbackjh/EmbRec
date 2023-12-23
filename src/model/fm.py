@@ -36,21 +36,26 @@ class FactorizationMachine(pl.LightningModule):
 
         return loss_y 
     
-    def forward(self, x,x_cont):
+    def forward(self, x,x_cont,emb_x):
         # FM part loss with interaction terms
         # x: batch_size * num_features
         lin_term = self.linear(x,x_cont)
-        embedding=self.embedding(x)
+        #embedding=self.embedding(x)
 
-        inter_term = self.interaction(embedding,x_cont)
+        inter_term,cont_emb = self.interaction(emb_x,x_cont)
         x= lin_term + inter_term
         x=x.squeeze(1)
-        return x
+        return x, cont_emb
 
     
     def training_step(self, batch, batch_idx):
         x,x_cont,y,c_values=batch
-        y_pred=self.forward(x,x_cont)
+
+        if self.args.model_type=='fm':
+            embed_x=self.embedding(x)
+            y_pred,_=self.forward(x,x_cont,embed_x)
+        
+        
         loss_y=self.loss(y_pred, y,c_values)
         self.log('train_loss', loss_y, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         return loss_y

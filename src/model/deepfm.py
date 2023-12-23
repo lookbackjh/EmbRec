@@ -16,9 +16,9 @@ class DeepFM(pl.LightningModule):
         self.fm = FactorizationMachine(args, field_dims)
         self.embedding = FeatureEmbedding(args, field_dims)
         if args.embedding_type=='SVD':
-            self.embed_output_dim = (len(field_dims) +1)* args.emb_dim + args.cont_dims-args.emb_dim
+            self.embed_output_dim = (len(field_dims) +1)* args.emb_dim + args.cont_dims*args.emb_dim-args.emb_dim
         else:
-            self. embed_output_dim = len(field_dims) * args.emb_dim+args.cont_dims
+            self. embed_output_dim = len(field_dims) * args.emb_dim+args.cont_dims*args.emb_dim
         #self.embed_output_dim = (len(field_dims) +1)* args.emb_dim
         self.mlp = MLP(args, self.embed_output_dim)
         self.bceloss=nn.BCEWithLogitsLoss() # since bcewith logits is used, we don't need to add sigmoid layer in the end
@@ -69,21 +69,30 @@ class DeepFM(pl.LightningModule):
 
     def forward(self, x,x_cont):
         # FM part, here, x_hat means another arbritary input of data, for combining the results. 
-        fm_part=self.fm(x, x_cont)
+        
         embed_x=self.embedding(x)
+
+        #embed_x.shape: batch_size * num_features * embedding_dim   
+
+
+        fm_part,cont_emb=self.fm(x, x_cont, embed_x)
+        embed_x=torch.cat((embed_x,cont_emb),1)
+        feature_number=embed_x.shape[1]
+
         if self.args.embedding_type=='SVD':
             #x_cont=x_cont.unsqueeze(1)
 
             # embed x: batch_size * num_features * num_embedding want to reshape to batch_size * (num_features*num_embedding)
-            embed_x=embed_x.view(-1, (len(self.field_dims))*self.args.emb_dim)
+            embed_x=embed_x.view(-1, feature_number*self.args.emb_dim)
 
             # if x_cont is not 0
-            new_x=torch.cat((embed_x,x_cont),1)
+            #new_x=torch.cat((embed_x,x_cont),1)
             #new_x=new_x.view(-1, self.embed_output_dim)
         else:
-            embed_x=embed_x.view(-1, (len(self.field_dims))*self.args.emb_dim)
-            new_x=torch.cat((embed_x,x_cont),1)
+            embed_x=embed_x.view(-1,feature_number*self.args.emb_dim)
+            #new_x=torch.cat((embed_x,x_cont),1)
 
+        new_x=embed_x
         deep_part=self.mlp(new_x)
         #x=x.float()
         
