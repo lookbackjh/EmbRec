@@ -99,8 +99,11 @@ class Emb_Test:
             X_cont=temp[self.contcol].values
             X_cont=torch.tensor(X_cont, dtype=torch.float32)
     
-
-            result=self.model.forward(X_cat,X_cont)
+            if self.args.model_type=='fm':
+                emb_x=self.model.embedding(X_cat)
+                result,_=self.model.forward(X_cat,X_cont,emb_x)
+            else:
+                result=self.model.forward(X_cat,X_cont)
             topidx=torch.argsort(result,descending=True)[:]
             #swith tensor to list
             topidx=topidx.tolist()

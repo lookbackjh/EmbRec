@@ -40,7 +40,9 @@ class FactorizationMachine(pl.LightningModule):
         # FM part loss with interaction terms
         # x: batch_size * num_features
         lin_term = self.linear(x,x_cont)
-        #embedding=self.embedding(x)
+        
+        
+        embedding=self.embedding(x)
 
         inter_term,cont_emb = self.interaction(emb_x,x_cont)
         x= lin_term + inter_term

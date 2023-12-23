@@ -26,7 +26,7 @@ parser.add_argument('--num_factors', type=int, default=15, help='Number of facto
 parser.add_argument('--lr', type=float, default=0.005, help='Learning rate for fm training')
 parser.add_argument('--weight_decay', type=float, default=0.001, help='Weight decay(for both FM and autoencoder)')
 parser.add_argument('--num_epochs_ae', type=int, default=300,    help='Number of epochs')
-parser.add_argument('--num_epochs_training', type=int, default=50,    help='Number of epochs')
+parser.add_argument('--num_epochs_training', type=int, default=30,    help='Number of epochs')
 
 parser.add_argument('--batch_size', type=int, default=1024, help='Batch size')
 #parser.add_argument('--ae_batch_size', type=int, default=256, help='Batch size for autoencoder')
@@ -48,8 +48,8 @@ parser.add_argument('--isuniform', type=bool, default=False, help='true if unifo
 parser.add_argument('--ratio_negative', type=int, default=0.2, help='negative sampling ratio rate for each user')
 #parser.add_argument('--auto_lr', type=float, default=0.01, help='autoencoder learning rate')
 #parser.add_argument('--k', type=int, default=10, help='autoencoder k')
-parser.add_argument('--num_eigenvector', type=int, default=180,help='Number of eigenvectors for SVD')
-parser.add_argument('--datatype', type=str, default="ml100k",help='ml100k or ml1m or shopping or goodbook or frappe')
+parser.add_argument('--num_eigenvector', type=int, default=64,help='Number of eigenvectors for SVD')
+parser.add_argument('--datatype', type=str, default="ml1m",help='ml100k or ml1m or shopping or goodbook or frappe')
 parser.add_argument('--c_zeros', type=int, default=5,help='c_zero for negative sampling')
 parser.add_argument('--cont_dims', type=int, default=0,help='continuous dimension(that changes for each dataset))')
 parser.add_argument('--shopping_file_num', type=int, default=147,help='name of shopping file choose from 147 or  148 or 149')
@@ -106,7 +106,7 @@ if __name__=='__main__':
 
     #data_types=['goodbook']
     embedding_type=['SVD','original']
-    model_type=['fm']
+    model_type=['fm','deepfm']
     #shopping_file_num=[147,148,149]
     folds=[1,2,3,4,5]
     #isuniform=[True,False]
