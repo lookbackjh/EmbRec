@@ -3,12 +3,15 @@ from torch.utils.data import Dataset
 from src.util.negativesampler import NegativeSampler
 import argparse
 from src.data.customdataloader import CustomDataLoader
+from src.data.SVDdataloader import SVDDataloader
 from torch.utils.data import DataLoader
 from src.data.datawrapper import DataWrapper
-from src.model.fm import FactorizationMachine
+from src.model.original.fm import FactorizationMachine
+from src.model.SVD_emb.svdfm import FactorizationMachineSVD
+from src.model.SVD_emb.svddeepfm import DeepFMSVD   
 from src.customtest import Emb_Test
 from sklearn.preprocessing import LabelEncoder
-from src.model.deepfm import DeepFM
+from src.model.original.deepfm import DeepFM
 from src.model.SVD import SVD
 from src.data.custompreprocess import CustomOneHot
 import time
@@ -26,7 +29,7 @@ parser.add_argument('--num_factors', type=int, default=15, help='Number of facto
 parser.add_argument('--lr', type=float, default=0.005, help='Learning rate for fm training')
 parser.add_argument('--weight_decay', type=float, default=0.001, help='Weight decay(for both FM and autoencoder)')
 parser.add_argument('--num_epochs_ae', type=int, default=300,    help='Number of epochs')
-parser.add_argument('--num_epochs_training', type=int, default=30,    help='Number of epochs')
+parser.add_argument('--num_epochs_training', type=int, default=1,    help='Number of epochs')
 
 parser.add_argument('--batch_size', type=int, default=1024, help='Batch size')
 #parser.add_argument('--ae_batch_size', type=int, default=256, help='Batch size for autoencoder')
@@ -48,8 +51,8 @@ parser.add_argument('--isuniform', type=bool, default=False, help='true if unifo
 parser.add_argument('--ratio_negative', type=int, default=0.2, help='negative sampling ratio rate for each user')
 #parser.add_argument('--auto_lr', type=float, default=0.01, help='autoencoder learning rate')
 #parser.add_argument('--k', type=int, default=10, help='autoencoder k')
-parser.add_argument('--num_eigenvector', type=int, default=129,help='Number of eigenvectors for SVD')
-parser.add_argument('--datatype', type=str, default="goodbook",help='ml100k or ml1m or shopping or goodbook or frappe')
+parser.add_argument('--num_eigenvector', type=int, default=32,help='Number of eigenvectors for SVD')
+parser.add_argument('--datatype', type=str, default="ml1m",help='ml100k or ml1m or shopping or goodbook or frappe')
 parser.add_argument('--c_zeros', type=int, default=5,help='c_zero for negative sampling')
 parser.add_argument('--cont_dims', type=int, default=0,help='continuous dimension(that changes for each dataset))')
 parser.add_argument('--shopping_file_num', type=int, default=147,help='name of shopping file choose from 147 or  148 or 149')
@@ -78,15 +81,29 @@ def trainer(args,data:Preprocessor):
     items,cons=data.get_catcont_train()
     target,c=data.get_target_c()
     field_dims=data.get_field_dims()
+    uidf=data.uidf.values
 
 
-    if args.model_type=='fm':
+    if args.model_type=='fm' and args.embedding_type=='original':
         model=FactorizationMachine(args,field_dims)
-    else:
-
+        Dataset=CustomDataLoader(items,cons,target,c)
+    elif args.model_type=='deepfm' and args.embedding_type=='original':
         model=DeepFM(args,field_dims)
+        Dataset=CustomDataLoader(items,cons,target,c)
+    elif args.model_type=='fm' and args.embedding_type=='SVD':
+        model=FactorizationMachineSVD(args,field_dims)
+        embs=cons[:,-64:]
+        cons=cons[:,:-64]
+        Dataset=SVDDataloader(items,embs,uidf,cons,target,c)
+    elif args.model_type=='deepfm' and args.embedding_type=='SVD':
+        model=DeepFMSVD(args,field_dims)
+        embs=cons[:,-64:]
+        cons=cons[:,:-64]
+        Dataset=SVDDataloader(items,embs,uidf,cons,target,c)
+    else:
+        raise NotImplementedError
     
-    Dataset=CustomDataLoader(items,cons,target,c)
+    
     #dataloaders
 
     dataloader=DataLoader(Dataset,batch_size=1024,shuffle=True,num_workers=20)
@@ -105,8 +122,8 @@ if __name__=='__main__':
     results={}
 
     #data_types=['goodbook']
-    embedding_type=['SVD','original']
-    model_type=['fm','deepfm']
+    embedding_type=['SVD']
+    model_type=['fm']
     #shopping_file_num=[147,148,149]
     folds=[1,2,3,4,5]
     #isuniform=[True,False]
@@ -116,10 +133,14 @@ if __name__=='__main__':
         for embedding in embedding_type:
             args.embedding_type=embedding
         
-            
+            print('model type is',md)
+            print('embedding type is',embedding)
             model=trainer(args,data_info)
             tester=Emb_Test(args,model,data_info)
-            result=tester.test()
+            if args.embedding_type=='SVD':
+                result=tester.svdtest()
+            else:
+                result=tester.test()
             results[md+embedding]=result
                 #results[md+embedding]=result
             
@@ -129,7 +150,7 @@ if __name__=='__main__':
     json_name=dataset_name+'_'+'eigen_'+str(num_eigenvector)+'_'+'uniform'+str(args.isuniform)+'.json'
     # want to save in results folder
     #folder
-    foldername='results/'+dataset_name+'/'
+    foldername='n_results/'+dataset_name+'/'
     if dataset_name=='shopping':
         json_name=dataset_name+'_'+str(args.shopping_file_num)+'_'+'eigen_'+str(num_eigenvector)+'_'+'uniform'+str(args.isuniform)+'.json'
     if dataset_name=='ml100k':

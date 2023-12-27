@@ -1,14 +1,16 @@
 from typing import Any
 import torch
 import torch.nn as nn
-from src.model.layers import MLP,FeatureEmbedding,FM_Linear,FM_Interaction
+from src.model.SVD_emb.layers import MLP,FeatureEmbedding,FM_Linear,FM_Interaction
 #lightning
 import pytorch_lightning as pl
 
-class FactorizationMachine(pl.LightningModule):
+class FactorizationMachineSVD(pl.LightningModule):
     def __init__(self, args, field_dims):
-        super(FactorizationMachine, self).__init__()
-        self.embedding=FeatureEmbedding(args,field_dims)
+        super(FactorizationMachineSVD, self).__init__()
+
+        if args.model_type=='fm':
+            self.embedding=FeatureEmbedding(args,field_dims)
         self.linear=FM_Linear(args,field_dims)
         self.interaction=FM_Interaction(args,field_dims)
         self.bceloss=nn.BCEWithLogitsLoss() # since bcewith logits is used, we don't need to add sigmoid layer in the end
@@ -36,27 +38,25 @@ class FactorizationMachine(pl.LightningModule):
 
         return loss_y 
     
-    def forward(self, x,x_cont,emb_x):
+    def forward(self, x,emb_x,svd_emb,x_cont):
         # FM part loss with interaction terms
         # x: batch_size * num_features
-        lin_term = self.linear(x,x_cont)
+        lin_term = self.linear(x,svd_emb,x_cont)
         
-        
-        embedding=self.embedding(x)
+        #embedding=self.embedding(x)
 
-        inter_term,cont_emb = self.interaction(emb_x,x_cont)
+        inter_term,cont_emb = self.interaction(emb_x,svd_emb,x_cont)
         x= lin_term + inter_term
         x=x.squeeze(1)
         return x, cont_emb
 
     
     def training_step(self, batch, batch_idx):
-        x,x_cont,y,c_values=batch
+        x,svd_emb,ui,x_cont,y,c_values=batch
 
-        if self.args.model_type=='fm':
-            embed_x=self.embedding(x)
-            y_pred,_=self.forward(x,x_cont,embed_x)
-        
+
+        embed_x=self.embedding(x)
+        y_pred,_=self.forward(x,embed_x,svd_emb,x_cont)
         
         loss_y=self.loss(y_pred, y,c_values)
         self.log('train_loss', loss_y, on_step=True, on_epoch=True, prog_bar=True, logger=True)

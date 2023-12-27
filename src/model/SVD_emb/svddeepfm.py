@@ -4,21 +4,20 @@ import pytorch_lightning as pl
 from typing import Any
 
 import torch
-from src.model.fm import FactorizationMachine
-from src.model.layers import FeatureEmbedding, FeatureEmbedding, FM_Linear, MLP
+from src.model.SVD_emb.svdfm import FactorizationMachineSVD
+from src.model.SVD_emb.layers import FeatureEmbedding, FeatureEmbedding, FM_Linear, MLP
 
 
 
-class DeepFM(pl.LightningModule):
+class DeepFMSVD(pl.LightningModule):
     def __init__(self, args,field_dims):
-        super(DeepFM, self).__init__()
+        super(DeepFMSVD, self).__init__()
         self.linear = FM_Linear(args,field_dims)
-        self.fm = FactorizationMachine(args, field_dims)
+        self.fm = FactorizationMachineSVD(args, field_dims)
         self.embedding = FeatureEmbedding(args, field_dims)
-        if args.embedding_type=='SVD':
-            self.embed_output_dim = (len(field_dims) +1)* args.emb_dim + args.cont_dims*args.emb_dim-args.emb_dim
-        else:
-            self. embed_output_dim = len(field_dims) * args.emb_dim+args.cont_dims*args.emb_dim
+
+        self.embed_output_dim = (len(field_dims)+1)* args.emb_dim + 2*args.emb_dim+(args.cont_dims-2*args.num_eigenvector)*args.emb_dim
+
         #self.embed_output_dim = (len(field_dims) +1)* args.emb_dim
         self.mlp = MLP(args, self.embed_output_dim)
         self.bceloss=nn.BCEWithLogitsLoss() # since bcewith logits is used, we don't need to add sigmoid layer in the end
@@ -67,29 +66,25 @@ class DeepFM(pl.LightningModule):
         return loss_y
     
 
-    def forward(self, x,x_cont):
+    def forward(self, x,embed_x,svd_emb,x_cont):
         # FM part, here, x_hat means another arbritary input of data, for combining the results. 
         
-        embed_x=self.embedding(x)
+        #embed_x=self.embedding(x)
+        fm_part,cont_emb=self.fm.forward(x, embed_x,svd_emb,x_cont)
+        user_emb=svd_emb[:,:self.args.num_eigenvector].unsqueeze(1)
+        item_emb=svd_emb[:,self.args.num_eigenvector:].unsqueeze(1)
+
+        embed_x=torch.cat((embed_x,user_emb),1)
+        embed_x=torch.cat((embed_x,item_emb),1)
+
 
         #embed_x.shape: batch_size * num_features * embedding_dim   
+        
 
 
-        fm_part,cont_emb=self.fm(x, x_cont, embed_x)
         embed_x=torch.cat((embed_x,cont_emb),1)
         feature_number=embed_x.shape[1]
-
-        if self.args.embedding_type=='SVD':
-            #x_cont=x_cont.unsqueeze(1)
-
-            # embed x: batch_size * num_features * num_embedding want to reshape to batch_size * (num_features*num_embedding)
-            embed_x=embed_x.view(-1, feature_number*self.args.emb_dim)
-
-            # if x_cont is not 0
-            #new_x=torch.cat((embed_x,x_cont),1)
-            #new_x=new_x.view(-1, self.embed_output_dim)
-        else:
-            embed_x=embed_x.view(-1,feature_number*self.args.emb_dim)
+        embed_x=embed_x.view(-1,feature_number*self.args.emb_dim)
             #new_x=torch.cat((embed_x,x_cont),1)
 
         new_x=embed_x
@@ -106,8 +101,11 @@ class DeepFM(pl.LightningModule):
         return y_pred
 
     def training_step(self, batch, batch_idx):
-        x,x_cont,y,c_values=batch
-        y_pred=self.forward(x,x_cont)
+        x,svd_emb,ui,x_cont,y,c_values=batch
+
+
+        embed_x=self.embedding(x)
+        y_pred=self.forward(x,embed_x,svd_emb,x_cont)
         loss_y=self.loss(y_pred, y,c_values)
         self.log('train_loss', loss_y, on_step=True, on_epoch=True, prog_bar=True, logger=True)
         return loss_y
