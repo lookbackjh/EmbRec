@@ -49,7 +49,7 @@ class NegativeSampler:
 
         print("Negative Sampling Started")
 
-        for customer in tqdm.tqdm(unique_customers[:]):
+        for customer in tqdm.tqdm(unique_customers[:1]):
             #unique_products = df['item_id'].unique()
 
 

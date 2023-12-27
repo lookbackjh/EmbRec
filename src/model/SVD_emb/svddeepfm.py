@@ -16,7 +16,7 @@ class DeepFMSVD(pl.LightningModule):
         self.fm = FactorizationMachineSVD(args, field_dims)
         self.embedding = FeatureEmbedding(args, field_dims)
 
-        self.embed_output_dim = (len(field_dims)+1)* args.emb_dim + 2*args.emb_dim+(args.cont_dims-2*args.num_eigenvector)*args.emb_dim
+        self.embed_output_dim = (len(field_dims))* args.emb_dim + 2*args.emb_dim+(args.cont_dims-2*args.num_eigenvector)*args.emb_dim
 
         #self.embed_output_dim = (len(field_dims) +1)* args.emb_dim
         self.mlp = MLP(args, self.embed_output_dim)

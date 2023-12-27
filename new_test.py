@@ -29,7 +29,7 @@ parser.add_argument('--num_factors', type=int, default=15, help='Number of facto
 parser.add_argument('--lr', type=float, default=0.005, help='Learning rate for fm training')
 parser.add_argument('--weight_decay', type=float, default=0.001, help='Weight decay(for both FM and autoencoder)')
 parser.add_argument('--num_epochs_ae', type=int, default=300,    help='Number of epochs')
-parser.add_argument('--num_epochs_training', type=int, default=1,    help='Number of epochs')
+parser.add_argument('--num_epochs_training', type=int, default=50,    help='Number of epochs')
 
 parser.add_argument('--batch_size', type=int, default=1024, help='Batch size')
 #parser.add_argument('--ae_batch_size', type=int, default=256, help='Batch size for autoencoder')
@@ -123,38 +123,40 @@ if __name__=='__main__':
 
     #data_types=['goodbook']
     embedding_type=['SVD']
-    model_type=['fm']
+    model_type=['deepfm','fm']
     #shopping_file_num=[147,148,149]
     folds=[1,2,3,4,5]
-    #isuniform=[True,False]
-    data_info=getdata(args)
-    for md in model_type:
-        args.model_type=md
-        for embedding in embedding_type:
-            args.embedding_type=embedding
-        
-            print('model type is',md)
-            print('embedding type is',embedding)
-            model=trainer(args,data_info)
-            tester=Emb_Test(args,model,data_info)
-            if args.embedding_type=='SVD':
-                result=tester.svdtest()
-            else:
-                result=tester.test()
-            results[md+embedding]=result
-                #results[md+embedding]=result
+    isuniform=[True,False]
+    
+    for uni in isuniform:
+        data_info=getdata(args)
+        for md in model_type:
+            args.model_type=md
+            for embedding in embedding_type:
+                args.embedding_type=embedding
+            
+                print('model type is',md)
+                print('embedding type is',embedding)
+                model=trainer(args,data_info)
+                tester=Emb_Test(args,model,data_info)
+                if args.embedding_type=='SVD':
+                    result=tester.svdtest()
+                else:
+                    result=tester.test()
+                results[md+embedding]=result
+                    #results[md+embedding]=result
             
 
-    dataset_name=args.datatype
-    num_eigenvector=args.num_eigenvector
-    json_name=dataset_name+'_'+'eigen_'+str(num_eigenvector)+'_'+'uniform'+str(args.isuniform)+'.json'
-    # want to save in results folder
-    #folder
-    foldername='n_results/'+dataset_name+'/'
-    if dataset_name=='shopping':
-        json_name=dataset_name+'_'+str(args.shopping_file_num)+'_'+'eigen_'+str(num_eigenvector)+'_'+'uniform'+str(args.isuniform)+'.json'
-    if dataset_name=='ml100k':
-        json_name=dataset_name+'_folds'+str(args.fold)+'eigen_'+str(num_eigenvector)+'_'+'uniform'+str(args.isuniform)+'.json'
-    with open(foldername+json_name, 'w') as fp:
-        json.dump(results, fp)
+        dataset_name=args.datatype
+        num_eigenvector=args.num_eigenvector
+        json_name=dataset_name+'_'+'eigen_'+str(num_eigenvector)+'_'+'uniform'+str(args.isuniform)+'.json'
+        # want to save in results folder
+        #folder
+        foldername='n_results/'+dataset_name+'/'
+        if dataset_name=='shopping':
+            json_name=dataset_name+'_'+str(args.shopping_file_num)+'_'+'eigen_'+str(num_eigenvector)+'_'+'uniform'+str(args.isuniform)+'.json'
+        if dataset_name=='ml100k':
+            json_name=dataset_name+'_folds'+str(args.fold)+'eigen_'+str(num_eigenvector)+'_'+'uniform'+str(args.isuniform)+'.json'
+        with open(foldername+json_name, 'w') as fp:
+            json.dump(results, fp)
 

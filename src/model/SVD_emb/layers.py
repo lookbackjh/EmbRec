@@ -103,10 +103,11 @@ class FM_Interaction(nn.Module):
         )
 
         #square_sum_emb=torch.concat((square_sum,x_cont**2),1)
+        #x_cont=x_cont.squeeze(1)
 
         new_interaction=interaction+cont_interactions
         
-        cont_emb=torch.matmul(x_cont,self.v)
+        cont_emb=self.v.unsqueeze(0).repeat(x_comb.shape[0],1,1)
 
         return interaction, cont_emb
 
