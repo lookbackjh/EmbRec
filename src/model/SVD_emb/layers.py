@@ -67,10 +67,10 @@ class FM_Linear(nn.Module):
 
         
 
-        user_emb=emb_x[:,0].reshape(linear_term.shape[0],1,1)
-        item_emb=emb_x[:,self.args.num_eigenvector].reshape(linear_term.shape[0],1,1)  
-        emb_x=torch.cat((user_emb,item_emb),1)
-        linear_term=torch.cat((linear_term,emb_x),1)
+        user_emb=emb_x[:,0].unsqueeze(1).unsqueeze(1)
+        item_emb=emb_x[:,self.args.num_eigenvector].unsqueeze(1).unsqueeze(1)
+        nemb_x=torch.cat((user_emb,item_emb),1)
+        linear_term=torch.cat((linear_term,nemb_x),1)
 
         x = torch.sum(linear_term,dim=1)+self.bias
         # if self.args.embedding_type=='SVD':

@@ -27,9 +27,9 @@ parser.add_argument('--train_ratio', type=float, default=0.7, help='training rat
 
 parser.add_argument('--num_factors', type=int, default=15, help='Number of factors for FM')
 parser.add_argument('--lr', type=float, default=0.005, help='Learning rate for fm training')
-parser.add_argument('--weight_decay', type=float, default=0.001, help='Weight decay(for both FM and autoencoder)')
+parser.add_argument('--weight_decay', type=float, default=0.00001, help='Weight decay(for both FM and autoencoder)')
 parser.add_argument('--num_epochs_ae', type=int, default=300,    help='Number of epochs')
-parser.add_argument('--num_epochs_training', type=int, default=50,    help='Number of epochs')
+parser.add_argument('--num_epochs_training', type=int, default=100,    help='Number of epochs')
 
 parser.add_argument('--batch_size', type=int, default=1024, help='Batch size')
 #parser.add_argument('--ae_batch_size', type=int, default=256, help='Batch size for autoencoder')
@@ -41,7 +41,7 @@ parser.add_argument('--seed', type=int, default=42)
 parser.add_argument('--save_model', type=bool, default=False)
 
 
-parser.add_argument('--emb_dim', type=int, default=32, help='embedding dimension for DeepFM')
+parser.add_argument('--emb_dim', type=int, default=16, help='embedding dimension for DeepFM')
 #parser.add_argument('--num_embedding', type=int, default=200, help='Number of embedding for autoencoder') 
 parser.add_argument('--embedding_type', type=str, default='original', help='AE or SVD or original')
 parser.add_argument('--model_type', type=str, default='deepfm', help='fm or deepfm')
@@ -51,8 +51,8 @@ parser.add_argument('--isuniform', type=bool, default=False, help='true if unifo
 parser.add_argument('--ratio_negative', type=int, default=0.2, help='negative sampling ratio rate for each user')
 #parser.add_argument('--auto_lr', type=float, default=0.01, help='autoencoder learning rate')
 #parser.add_argument('--k', type=int, default=10, help='autoencoder k')
-parser.add_argument('--num_eigenvector', type=int, default=32,help='Number of eigenvectors for SVD')
-parser.add_argument('--datatype', type=str, default="ml1m",help='ml100k or ml1m or shopping or goodbook or frappe')
+parser.add_argument('--num_eigenvector', type=int, default=16,help='Number of eigenvectors for SVD')
+parser.add_argument('--datatype', type=str, default="ml100k",help='ml100k or ml1m or shopping or goodbook or frappe')
 parser.add_argument('--c_zeros', type=int, default=5,help='c_zero for negative sampling')
 parser.add_argument('--cont_dims', type=int, default=0,help='continuous dimension(that changes for each dataset))')
 parser.add_argument('--shopping_file_num', type=int, default=147,help='name of shopping file choose from 147 or  148 or 149')
@@ -92,13 +92,13 @@ def trainer(args,data:Preprocessor):
         Dataset=CustomDataLoader(items,cons,target,c)
     elif args.model_type=='fm' and args.embedding_type=='SVD':
         model=FactorizationMachineSVD(args,field_dims)
-        embs=cons[:,-64:]
-        cons=cons[:,:-64]
+        embs=cons[:,-32:]
+        cons=cons[:,:-32]
         Dataset=SVDDataloader(items,embs,uidf,cons,target,c)
     elif args.model_type=='deepfm' and args.embedding_type=='SVD':
         model=DeepFMSVD(args,field_dims)
-        embs=cons[:,-64:]
-        cons=cons[:,:-64]
+        embs=cons[:,-32:]
+        cons=cons[:,:-32]
         Dataset=SVDDataloader(items,embs,uidf,cons,target,c)
     else:
         raise NotImplementedError
@@ -122,7 +122,7 @@ if __name__=='__main__':
     results={}
 
     #data_types=['goodbook']
-    embedding_type=['SVD']
+    embedding_type=['SVD','original']
     model_type=['deepfm','fm']
     #shopping_file_num=[147,148,149]
     folds=[1,2,3,4,5]

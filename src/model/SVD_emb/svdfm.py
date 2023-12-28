@@ -2,6 +2,8 @@ from typing import Any
 import torch
 import torch.nn as nn
 from src.model.SVD_emb.layers import MLP,FeatureEmbedding,FM_Linear,FM_Interaction
+from src.util.scaler import StandardScaler
+
 #lightning
 import pytorch_lightning as pl
 
@@ -16,6 +18,8 @@ class FactorizationMachineSVD(pl.LightningModule):
         self.bceloss=nn.BCEWithLogitsLoss() # since bcewith logits is used, we don't need to add sigmoid layer in the end
         self.lr=args.lr
         self.args=args
+        self.sig=nn.Sigmoid()
+        self.last_linear=nn.Linear(2,1)
 
 
     def l2norm(self):
@@ -46,9 +50,23 @@ class FactorizationMachineSVD(pl.LightningModule):
         #embedding=self.embedding(x)
 
         inter_term,cont_emb = self.interaction(emb_x,svd_emb,x_cont)
-        x= lin_term + inter_term
+
+
+
+
+        #x= lin_term*0.0001+ inter_term*0.0001
+
+
+        # want to normalize lin_term and inter_term to be in the same scale
+        # so that the weights can be comparable
+        lin_term_sig=self.sig(lin_term)
+        inter_term_sig=self.sig(inter_term)
+        outs=torch.cat((lin_term_sig,inter_term_sig),1)
+        x=self.last_linear(outs)
+        
         x=x.squeeze(1)
-        return x, cont_emb
+
+        return x, cont_emb, lin_term, inter_term
 
     
     def training_step(self, batch, batch_idx):

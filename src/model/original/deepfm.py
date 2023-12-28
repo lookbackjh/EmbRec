@@ -27,7 +27,8 @@ class DeepFM(pl.LightningModule):
         #         nn.ReLU(),
         #         )
         self.field_dims=field_dims
-        #self.sig=nn.Sigmoid()
+        self.sig=nn.Sigmoid()
+        self.lastlinear=nn.Linear(3,1)
 
     def l2norm(self):
 
@@ -71,7 +72,7 @@ class DeepFM(pl.LightningModule):
         embed_x=self.embedding(x)
 
         #embed_x.shape: batch_size * num_features * embedding_dim   
-        fm_part,cont_emb=self.fm.forward(x, x_cont, embed_x)
+        fm_part,cont_emb,lin_term,inter_term=self.fm.forward(x, x_cont, embed_x)
 
         if cont_emb is not None:
             embed_x=torch.cat((embed_x,cont_emb),1)
@@ -81,12 +82,18 @@ class DeepFM(pl.LightningModule):
 
         new_x=embed_x
         deep_part=self.mlp(new_x)
+
+        lin_term=self.sig(lin_term)
+        inter_term=self.sig(inter_term)
+        deep_part=self.sig(deep_part)
         #x=x.float()
-        
+        outs=torch.cat((lin_term,inter_term),1)
+        outs=torch.cat((outs,deep_part),1)
+        y_pred=self.lastlinear(outs).squeeze(1)
+
         # Deep part
 
         #deep_out=self.sig(deep_out)
-        y_pred=fm_part+deep_part.squeeze()
        
         #sig_y_pred=self.sig(y_pred)
 

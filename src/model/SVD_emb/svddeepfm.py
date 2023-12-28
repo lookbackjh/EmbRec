@@ -6,6 +6,7 @@ from typing import Any
 import torch
 from src.model.SVD_emb.svdfm import FactorizationMachineSVD
 from src.model.SVD_emb.layers import FeatureEmbedding, FeatureEmbedding, FM_Linear, MLP
+from src.util.scaler import StandardScaler
 
 
 
@@ -28,7 +29,8 @@ class DeepFMSVD(pl.LightningModule):
         #         nn.ReLU(),
         #         )
         self.field_dims=field_dims
-        #self.sig=nn.Sigmoid()
+        self.sig=nn.Sigmoid()
+        self.lastlinear=nn.Linear(3,1)
 
     def l2norm(self):
 
@@ -70,7 +72,7 @@ class DeepFMSVD(pl.LightningModule):
         # FM part, here, x_hat means another arbritary input of data, for combining the results. 
         
         #embed_x=self.embedding(x)
-        fm_part,cont_emb=self.fm.forward(x, embed_x,svd_emb,x_cont)
+        fm_part,cont_emb,lin_term,inter_term=self.fm(x, embed_x,svd_emb,x_cont)
         user_emb=svd_emb[:,:self.args.num_eigenvector]
         item_emb=svd_emb[:,self.args.num_eigenvector:]
 
@@ -81,7 +83,11 @@ class DeepFMSVD(pl.LightningModule):
 
         embed_x=torch.cat((embed_x,cont_emb),1)
         feature_number=embed_x.shape[1]
-        embed_x=embed_x.view(-1,feature_number*self.args.emb_dim)
+        
+        # want embed_x to be batch_size * (num_features*embedding_dim)
+        embed_x=embed_x.reshape(-1,feature_number*self.args.emb_dim)
+        
+        #embed_x=embed_x.view(-1,feature_number*self.args.emb_dim)
         new_x=torch.cat((embed_x,user_emb),1)
         bnew_x=torch.cat((new_x,item_emb),1)
         deep_part=self.mlp(bnew_x)
@@ -90,7 +96,16 @@ class DeepFMSVD(pl.LightningModule):
         # Deep part
 
         #deep_out=self.sig(deep_out)
-        y_pred=fm_part*0.01+deep_part.squeeze()
+        #std3=StandardScaler()
+        lin_term=self.sig(lin_term)
+        inter_term=self.sig(inter_term)
+        deep_part=self.sig(deep_part)
+
+        outs=torch.cat((lin_term,inter_term ),1)
+        outs=torch.cat((outs,deep_part),1)
+        y_pred=self.lastlinear(outs).squeeze(1)
+
+        #y_pred=fm_part+deep_part.squeeze()
        
         #sig_y_pred=self.sig(y_pred)
 
