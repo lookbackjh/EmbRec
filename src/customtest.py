@@ -100,7 +100,7 @@ class Emb_Test:
             emb_x=self.model.embedding(X_cat)
             if self.args.model_type=='fm':
                 
-                result,_=self.model.forward(X_cat,emb_x,svd_emb,X_cont)
+                result,_,_,_=self.model.forward(X_cat,emb_x,svd_emb,X_cont)
             else:
                 result=self.model.forward(X_cat,emb_x,svd_emb,X_cont)
             topidx=torch.argsort(result,descending=True)[:]

@@ -74,7 +74,7 @@ class FactorizationMachineSVD(pl.LightningModule):
 
 
         embed_x=self.embedding(x)
-        y_pred,_=self.forward(x,embed_x,svd_emb,x_cont)
+        y_pred,_,_,_=self.forward(x,embed_x,svd_emb,x_cont)
         
         loss_y=self.loss(y_pred, y,c_values)
         self.log('train_loss', loss_y, on_step=True, on_epoch=True, prog_bar=True, logger=True)

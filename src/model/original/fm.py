@@ -63,7 +63,7 @@ class FactorizationMachine(pl.LightningModule):
 
 
         embed_x=self.embedding(x)
-        y_pred,_=self.forward(x,x_cont,embed_x)
+        y_pred,_,_,_=self.forward(x,x_cont,embed_x)
         
         loss_y=self.loss(y_pred, y,c_values)
         self.log('train_loss', loss_y, on_step=True, on_epoch=True, prog_bar=True, logger=True)

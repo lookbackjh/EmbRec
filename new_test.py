@@ -29,7 +29,7 @@ parser.add_argument('--num_factors', type=int, default=15, help='Number of facto
 parser.add_argument('--lr', type=float, default=0.005, help='Learning rate for fm training')
 parser.add_argument('--weight_decay', type=float, default=0.00001, help='Weight decay(for both FM and autoencoder)')
 parser.add_argument('--num_epochs_ae', type=int, default=300,    help='Number of epochs')
-parser.add_argument('--num_epochs_training', type=int, default=100,    help='Number of epochs')
+parser.add_argument('--num_epochs_training', type=int, default=1,    help='Number of epochs')
 
 parser.add_argument('--batch_size', type=int, default=1024, help='Batch size')
 #parser.add_argument('--ae_batch_size', type=int, default=256, help='Batch size for autoencoder')
@@ -123,7 +123,7 @@ if __name__=='__main__':
 
     #data_types=['goodbook']
     embedding_type=['SVD','original']
-    model_type=['deepfm','fm']
+    model_type=['fm','fm']
     #shopping_file_num=[147,148,149]
     folds=[1,2,3,4,5]
     isuniform=[True,False]
