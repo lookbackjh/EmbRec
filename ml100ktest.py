@@ -126,11 +126,14 @@ if __name__=='__main__':
     model_type=['fm','deepfm']
     #shopping_file_num=[147,148,149]
     folds=[1,2,3,4,5]
-    isuniform=[False,True]
+    isuniform=[True,False]
     
     for uni in isuniform:
-        args.isuniform=uni
+        for fold in folds:
+            args.fold=fold
+  
         data_info=getdata(args)
+
         for md in model_type:
             args.model_type=md
             for embedding in embedding_type:
