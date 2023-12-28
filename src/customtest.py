@@ -95,8 +95,8 @@ class Emb_Test:
             X_cat=torch.tensor(X_cat, dtype=torch.int64)
             X_cont=temp[self.contcol].values
             X_cont=torch.tensor(X_cont, dtype=torch.float32)
-            svd_emb=X_cont[:,-64:]
-            X_cont=X_cont[:,:-64]
+            svd_emb=X_cont[:,-self.args.num_eigenvector*2:]
+            X_cont=X_cont[:,:-self.args.num_eigenvector*2]
             emb_x=self.model.embedding(X_cat)
             if self.args.model_type=='fm':
                 

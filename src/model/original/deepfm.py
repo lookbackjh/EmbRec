@@ -15,10 +15,8 @@ class DeepFM(pl.LightningModule):
         self.linear = FM_Linear(args,field_dims)
         self.fm = FactorizationMachine(args, field_dims)
         self.embedding = FeatureEmbedding(args, field_dims)
-        if args.embedding_type=='SVD':
-            self.embed_output_dim = (len(field_dims) +1)* args.emb_dim + args.cont_dims*args.emb_dim-args.emb_dim
-        else:
-            self. embed_output_dim = len(field_dims) * args.emb_dim+args.cont_dims*args.emb_dim
+
+        self. embed_output_dim = len(field_dims) * args.emb_dim+args.cont_dims*args.emb_dim
         #self.embed_output_dim = (len(field_dims) +1)* args.emb_dim
         self.mlp = MLP(args, self.embed_output_dim)
         self.bceloss=nn.BCEWithLogitsLoss() # since bcewith logits is used, we don't need to add sigmoid layer in the end

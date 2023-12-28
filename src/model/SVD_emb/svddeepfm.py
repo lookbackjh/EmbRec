@@ -71,11 +71,8 @@ class DeepFMSVD(pl.LightningModule):
         
         #embed_x=self.embedding(x)
         fm_part,cont_emb=self.fm.forward(x, embed_x,svd_emb,x_cont)
-        user_emb=svd_emb[:,:self.args.num_eigenvector].unsqueeze(1)
-        item_emb=svd_emb[:,self.args.num_eigenvector:].unsqueeze(1)
-
-        embed_x=torch.cat((embed_x,user_emb),1)
-        embed_x=torch.cat((embed_x,item_emb),1)
+        user_emb=svd_emb[:,:self.args.num_eigenvector]
+        item_emb=svd_emb[:,self.args.num_eigenvector:]
 
 
         #embed_x.shape: batch_size * num_features * embedding_dim   
@@ -85,16 +82,15 @@ class DeepFMSVD(pl.LightningModule):
         embed_x=torch.cat((embed_x,cont_emb),1)
         feature_number=embed_x.shape[1]
         embed_x=embed_x.view(-1,feature_number*self.args.emb_dim)
-            #new_x=torch.cat((embed_x,x_cont),1)
-
-        new_x=embed_x
-        deep_part=self.mlp(new_x)
+        new_x=torch.cat((embed_x,user_emb),1)
+        bnew_x=torch.cat((new_x,item_emb),1)
+        deep_part=self.mlp(bnew_x)
         #x=x.float()
         
         # Deep part
 
         #deep_out=self.sig(deep_out)
-        y_pred=fm_part+deep_part.squeeze()
+        y_pred=fm_part*0.01+deep_part.squeeze()
        
         #sig_y_pred=self.sig(y_pred)
 
