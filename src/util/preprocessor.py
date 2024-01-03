@@ -167,6 +167,7 @@ class Preprocessor:
             cat_train_df=train_df[cat_columns].drop(['user_id','item_id'],axis=1).to_numpy()[:].astype('int')
             cont_columns=cont_columns+self.user_embedding_df.columns.tolist()+self.item_embedding_df.columns.tolist()
             #delete user_id, item_id from cont_cols
+            
             cont_columns.remove('user_id')
             cont_columns.remove('item_id')
 
@@ -188,6 +189,7 @@ class Preprocessor:
 
         self.cat_columns_temp=cat_columns
         self.cont_columns_temp=cont_columns
+        self.uidf=train_df[['user_id','item_id']]
         self.cat_train_df_temp=cat_train_df
         #self.cont_train_df_temp=cont_train_df
         self.cont_train_df_temp=cont_train_df.to_numpy()[:].astype('float32')

@@ -1,4 +1,5 @@
 from scipy.sparse.linalg import svds
+from sklearn.decomposition import TruncatedSVD
 class SVD:
 
     def __init__(self,args) -> None:
@@ -8,7 +9,7 @@ class SVD:
 
     def fit_svd(self,x):
         u, s, vt = svds(x, k = self.args.num_eigenvector)
-        return u,s,vt.T
+        return u,vt.T
 
     def get_embedding(self,x):
 
@@ -18,6 +19,10 @@ class SVD:
         # pivot_data[pivot_data >= 1] = 1
         # pivot_data = pivot_data.to_numpy()
         # # x dtype to float
-        # pivot_data=pivot_data.astype(float)  
-        u,s,vt= self.fit_svd(x)
-        return u,vt
+
+        truncsvd=TruncatedSVD(n_components=self.args.num_eigenvector)
+        u=truncsvd.fit_transform(x)
+        v=truncsvd.components_
+        #u,s,vt= self.fit_svd(x)
+
+        return u, v.T

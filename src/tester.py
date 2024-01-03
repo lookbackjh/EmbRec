@@ -23,18 +23,6 @@ class Tester:
         movie_ids=sorted(self.train_df['movie_id'].unique())
         user_ids=sorted(self.train_df['user_id'].unique())
 
-        #dictionary that maps movie_id to movie_frequency
-        # movie_frequency={}
-        # for i in movie_ids:
-        #     movie_frequency[i]=len(self.original_df[self.original_df['movie_id']==i])
-        
-        # #dictionary that maps user_id to user_frequency
-        # user_frequency={}
-        # for i in user_ids:
-        #     user_frequency[i]=len(self.original_df[self.original_df['user_id']==i])
-
-
-        # make a dataframe that has all the user_id, movie_id pairs
         npuser_movie=np.zeros((len(user_ids)*len(movie_ids),4))
         npuser_movie=npuser_movie.astype(int)
         npuser_movie[:,0]=np.repeat(user_ids,len(movie_ids))
