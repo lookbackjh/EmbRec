@@ -13,7 +13,6 @@ from src.customtest import Emb_Test
 from sklearn.preprocessing import LabelEncoder
 from src.model.original.deepfm import DeepFM
 from src.model.SVD import SVD
-from src.data.custompreprocess import CustomOneHot
 import time
 import numpy as np
 #copy
