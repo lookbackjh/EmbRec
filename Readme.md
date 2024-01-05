@@ -2,7 +2,7 @@
 
 ## 0. Overview
 
-- Our paper mainly proposes two things one is **negative sampling** and the other is **SVD embedding**
+- Our paper mainly proposes **SVD embedding** for factorization machines (FM/DeepFM)
 - Followed  Most of the DeepFM/FM code structure from [https://github.com/rixwew/pytorch-fm](https://github.com/rixwew/pytorch-fm)
 
 ## 1. Basic Requirements.
@@ -21,6 +21,6 @@
 
 ## 3. Algorithms
 
-- SVD Embedding applied Factorization machine/DeepFM can be seen in `model/SVD_emb` folder
+- SVD Embedding applied FM/DeepFM can be seen in `model/SVD_emb` folder
 - How we implemented negative sampling can be seen in `util/negativesampler.py`
-- Our proposed frequency-based negative sampling (abbreviated FNS in paper, ) can be used by making `args.isuniform=False`
+- Our  frequency-based negative sampling (abbreviated FNS in paper, ) can be used by making `args.isuniform=False`
