@@ -117,7 +117,7 @@ class Emb_Test:
             ml=ml[topidx]
             cur_userslist=np.array(train_org[(train_org['user_id'])==self.le['user_id'].transform([customerid])[0]]['item_id'].unique())
             
-            # 여기 안본게 포함되어있을 수 있음 이거 처리해주어ㅑ하미
+            #  testing needs to be done with item_id that exists in train data
             cur_userslist=self.le['item_id'].inverse_transform(cur_userslist)
             
             # erase the things in ml that are in cur_userslist without changing the order

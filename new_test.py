@@ -77,29 +77,34 @@ def getdata(args):
 
 
 def trainer(args,data:Preprocessor):
+
     data.label_encode()
     items,cons=data.get_catcont_train()
     target,c=data.get_target_c()
     field_dims=data.get_field_dims()
     uidf=data.uidf.values
 
-
+    # I know this is a bit inefficient to create all four classes for model, but I did this for simplicity
     if args.model_type=='fm' and args.embedding_type=='original':
         model=FactorizationMachine(args,field_dims)
         Dataset=CustomDataLoader(items,cons,target,c)
+
     elif args.model_type=='deepfm' and args.embedding_type=='original':
         model=DeepFM(args,field_dims)
         Dataset=CustomDataLoader(items,cons,target,c)
+
     elif args.model_type=='fm' and args.embedding_type=='SVD':
         model=FactorizationMachineSVD(args,field_dims)
-        embs=cons[:,-32:]
-        cons=cons[:,:-32]
+        embs=cons[:,-args.num_eigenvector*2:] # Here, numeighenvector*2 refers to embeddings for both user and item
+        cons=cons[:,:-args.num_eigenvector*2] # rest of the columns are continuous columns (e.g. age, , etc.)
         Dataset=SVDDataloader(items,embs,uidf,cons,target,c)
+
     elif args.model_type=='deepfm' and args.embedding_type=='SVD':
         model=DeepFMSVD(args,field_dims)
-        embs=cons[:,-32:]
-        cons=cons[:,:-32]
+        embs=cons[:,-args.num_eigenvector*2:] # Here, numeighenvector*2 refers to embeddings for both user and item
+        cons=cons[:,:-args.num_eigenvector*2] # rest of the columns are continuous columns (e.g. age, , etc.)
         Dataset=SVDDataloader(items,embs,uidf,cons,target,c)
+
     else:
         raise NotImplementedError
     
@@ -120,51 +125,30 @@ def trainer(args,data:Preprocessor):
 
 if __name__=='__main__':
     args = parser.parse_args("")
-    svdresults=[]
-    originalresults=[]
+
+    
     results={}
 
-    #data_types=['goodbook']
-    embedding_type=['SVD','original']
-    model_type=['fm','deepfm']
-    #shopping_file_num=[147,148,149]
-    folds=[1,2,3,4,5]
-    isuniform=[True]
-    times=[]
-    for uni in isuniform:
-        args.isuniform=uni
-        data_info=getdata(args)
-        for md in model_type:
-            args.model_type=md
-            for embedding in embedding_type:
-                args.embedding_type=embedding
-            
-                print('model type is',md)
-                print('embedding type is',embedding)
-                model,timeee=trainer(args,data_info)
-                test_time=time.time()
-                tester=Emb_Test(args,model,data_info)
-                if args.embedding_type=='SVD':
-                    result=tester.svdtest()
-                else:
-                    result=tester.test()
-                end_test_time=time.time()
-                results[md+embedding]=result
-                    #results[md+embedding]=result
-                times.append(end_test_time-test_time)
+    data_info=getdata(args)
+    print('model type is',args.model_type)
+    print('embedding type is',args.embedding_type)
+    model,timeee=trainer(args,data_info)
+    test_time=time.time()
+    tester=Emb_Test(args,model,data_info)
+
+
+    if args.embedding_type=='SVD':
+        result=tester.svdtest()
+    else:
+        result=tester.test()
+    
+    
+    end_test_time=time.time()
+    results[args.model_type+args.embedding_type]=result
+    #results[md+embedding]=result
+    print(results)
+    print(timeee)
+
             
 
-        dataset_name=args.datatype
-        num_eigenvector=args.num_eigenvector
-        print('time is',times)
-        # json_name=dataset_name+'_'+'eigen_'+str(num_eigenvector)+'_'+'uniform'+str(args.isuniform)+'ver345.json'
-        # # want to save in results folder
-        # #folder
-        # foldername='n_results/'+dataset_name+'/'
-        # if dataset_name=='shopping':
-        #     json_name=dataset_name+'_'+str(args.shopping_file_num)+'_'+'eigen_'+str(num_eigenvector)+'_'+'uniform'+str(args.isuniform)+'.json'
-        # if dataset_name=='ml100k':
-        #     json_name=dataset_name+'_folds'+str(args.fold)+'eigen_'+str(num_eigenvector)+'_'+'uniform'+str(args.isuniform)+'.json'
-        # with open(foldername+json_name, 'w') as fp:
-        #     json.dump(results, fp)
 

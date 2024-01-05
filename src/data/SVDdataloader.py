@@ -1,5 +1,7 @@
 import torch.utils.data as data_utils
 
+## dataloader for SVD + FM based model part. 
+
 class SVDDataloader(data_utils.Dataset):
     # as we already converted to tensor, we can directly return the tensor
     def __init__(self,x,emb,ui,cons,y,c) -> None:
