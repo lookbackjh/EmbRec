@@ -15,7 +15,7 @@
 **run `new_test.py`**
 
 - To try SVD embedding, make `args.embedding_type="SVD"`
-- To change model options(FM/DeepFM) change `args.embedding_type`
+- To change model options(FM/DeepFM) change `args.model_type`
 - Various hyperparamters  to test can be changed based on your preference.
 - datasets: other more datasets were used but here we upload ml100k and ml1m
 
