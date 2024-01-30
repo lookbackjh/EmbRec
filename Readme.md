@@ -1,4 +1,5 @@
 # Code for Simple and effective recommendations using implicit feedback-aware factorization machines
+![Untitled (2)](https://github.com/lookbackjh/EmbRec/assets/75593825/b20d2c60-0ea0-40a4-bc32-a875b2f47255)
 
 ## 0. Overview
 
