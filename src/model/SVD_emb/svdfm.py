@@ -2,7 +2,7 @@ from typing import Any
 import torch
 import torch.nn as nn
 from src.model.SVD_emb.layers import MLP,FeatureEmbedding,FM_Linear,FM_Interaction
-from src.util.scaler import StandardScaler
+#from src.util.scaler import StandardScaler
 
 #lightning
 import pytorch_lightning as pl
