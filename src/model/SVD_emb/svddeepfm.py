@@ -6,7 +6,7 @@ from typing import Any
 import torch
 from src.model.SVD_emb.svdfm import FactorizationMachineSVD
 from src.model.SVD_emb.layers import FeatureEmbedding, FeatureEmbedding, FM_Linear, MLP
-from src.util.scaler import StandardScaler
+#from src.util.scaler import StandardScaler
 
 
 
